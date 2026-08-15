@@ -2,6 +2,7 @@ import { useState } from "react"
 import { MinusIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -18,7 +19,7 @@ interface StationInventorySectionProps {
 }
 
 export function StationInventorySection({ stationId, canEdit }: StationInventorySectionProps) {
-  const { data, isLoading } = useStationInventory(stationId)
+  const { data, isLoading, isError, refetch } = useStationInventory(stationId)
   const updateMutation = useUpdateStationInventoryQuantity(stationId)
 
   return (
@@ -41,20 +42,18 @@ export function StationInventorySection({ stationId, canEdit }: StationInventory
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={4} className="text-muted-foreground text-center">
-                Loading…
-              </TableCell>
-            </TableRow>
-          ) : !data || data.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={4} className="text-muted-foreground text-center">
-                No inventory recorded for this station yet.
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.map((item) => (
+          <TableStatusRow
+            colSpan={4}
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={!isLoading && !isError && (!data || data.length === 0)}
+            resourceLabel="this station's inventory"
+            emptyMessage="No inventory recorded for this station yet."
+            onRetry={refetch}
+          />
+          {!isLoading &&
+            !isError &&
+            data?.map((item) => (
               <InventoryRow
                 key={item.id}
                 item={item}
@@ -70,8 +69,7 @@ export function StationInventorySection({ stationId, canEdit }: StationInventory
                 }
                 isPending={updateMutation.isPending}
               />
-            ))
-          )}
+            ))}
         </TableBody>
       </Table>
     </div>

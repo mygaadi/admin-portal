@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog"
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
+import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { SparePartFormDialog } from "@/features/spare-parts/spare-part-form-dialog"
@@ -41,7 +42,7 @@ const columns: ColumnDef<SparePart>[] = [
 
 export function SparePartsPage() {
   const isAdmin = useIsAdmin()
-  const { data, isLoading } = useSpareParts()
+  const { data, isLoading, isError, refetch } = useSpareParts()
   const deleteMutation = useDeleteSparePart()
 
   const [formState, setFormState] = useState<FormState>(null)
@@ -103,19 +104,17 @@ export function SparePartsPage() {
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columnCount} className="text-muted-foreground text-center">
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columnCount} className="text-muted-foreground text-center">
-                  No spare parts yet — add one to get started.
-                </TableCell>
-              </TableRow>
-            ) : (
+            <TableStatusRow
+              colSpan={columnCount}
+              isLoading={isLoading}
+              isError={isError}
+              isEmpty={!isLoading && !isError && table.getRowModel().rows.length === 0}
+              resourceLabel="spare parts"
+              emptyMessage="No spare parts yet — add one to get started."
+              onRetry={refetch}
+            />
+            {!isLoading &&
+              !isError &&
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
@@ -148,8 +147,7 @@ export function SparePartsPage() {
                     </TableCell>
                   )}
                 </TableRow>
-              ))
-            )}
+              ))}
           </TableBody>
         </Table>
       </div>

@@ -3,6 +3,7 @@ import { Link } from "react-router"
 
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
+import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BookingStatusStepper } from "@/features/bookings/booking-status-stepper"
@@ -37,7 +38,7 @@ const columns: ColumnDef<Booking>[] = [
 ]
 
 export function MyBookingsPage() {
-  const { data, isLoading } = useBookingsByStation(MOCK_MY_STATION_ID)
+  const { data, isLoading, isError, refetch } = useBookingsByStation(MOCK_MY_STATION_ID)
 
   const table = useReactTable({
     data: data ?? [],
@@ -77,25 +78,17 @@ export function MyBookingsPage() {
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + 1}
-                  className="text-muted-foreground text-center"
-                >
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + 1}
-                  className="text-muted-foreground text-center"
-                >
-                  No bookings for your station yet.
-                </TableCell>
-              </TableRow>
-            ) : (
+            <TableStatusRow
+              colSpan={columns.length + 1}
+              isLoading={isLoading}
+              isError={isError}
+              isEmpty={!isLoading && !isError && table.getRowModel().rows.length === 0}
+              resourceLabel="your station's bookings"
+              emptyMessage="No bookings for your station yet."
+              onRetry={refetch}
+            />
+            {!isLoading &&
+              !isError &&
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
@@ -113,8 +106,7 @@ export function MyBookingsPage() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
+              ))}
           </TableBody>
         </Table>
       </div>

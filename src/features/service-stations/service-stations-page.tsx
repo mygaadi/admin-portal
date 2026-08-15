@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog"
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
+import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ServiceStationFormDialog } from "@/features/service-stations/service-station-form-dialog"
@@ -32,7 +33,7 @@ const columns: ColumnDef<ServiceStation>[] = [
 ]
 
 export function ServiceStationsPage() {
-  const { data, isLoading } = useServiceStations()
+  const { data, isLoading, isError, refetch } = useServiceStations()
   const deleteMutation = useDeleteServiceStation()
 
   const [formState, setFormState] = useState<FormState>(null)
@@ -88,25 +89,17 @@ export function ServiceStationsPage() {
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + 1}
-                  className="text-muted-foreground text-center"
-                >
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + 1}
-                  className="text-muted-foreground text-center"
-                >
-                  No service stations yet — add one to get started.
-                </TableCell>
-              </TableRow>
-            ) : (
+            <TableStatusRow
+              colSpan={columns.length + 1}
+              isLoading={isLoading}
+              isError={isError}
+              isEmpty={!isLoading && !isError && table.getRowModel().rows.length === 0}
+              resourceLabel="service stations"
+              emptyMessage="No service stations yet — add one to get started."
+              onRetry={refetch}
+            />
+            {!isLoading &&
+              !isError &&
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
@@ -144,8 +137,7 @@ export function ServiceStationsPage() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
+              ))}
           </TableBody>
         </Table>
       </div>

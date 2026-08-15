@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
+import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -187,7 +188,7 @@ function DetailField({ label, value }: { label: string; value: string }) {
 }
 
 function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdit: boolean }) {
-  const { data: parts, isLoading } = useBookingParts(bookingId)
+  const { data: parts, isLoading, isError, refetch } = useBookingParts(bookingId)
   const { data: spareParts } = useSpareParts()
   const addMutation = useAddBookingPart(bookingId)
   const removeMutation = useRemoveBookingPart(bookingId)
@@ -239,20 +240,18 @@ function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdi
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-muted-foreground text-center">
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : !parts || parts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-muted-foreground text-center">
-                  No parts added yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              parts.map((part) => (
+            <TableStatusRow
+              colSpan={5}
+              isLoading={isLoading}
+              isError={isError}
+              isEmpty={!isLoading && !isError && (!parts || parts.length === 0)}
+              resourceLabel="parts used on this booking"
+              emptyMessage="No parts added yet."
+              onRetry={refetch}
+            />
+            {!isLoading &&
+              !isError &&
+              parts?.map((part) => (
                 <TableRow key={part.id}>
                   <TableCell>{part.sparePartName}</TableCell>
                   <TableCell className="text-muted-foreground font-mono text-xs">
@@ -275,8 +274,7 @@ function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdi
                     </TableCell>
                   )}
                 </TableRow>
-              ))
-            )}
+              ))}
           </TableBody>
         </Table>
       </div>

@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog"
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
+import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
@@ -42,7 +43,7 @@ const columns: ColumnDef<VehicleModel>[] = [
 
 export function VehicleModelsPage() {
   const isAdmin = useIsAdmin()
-  const { data, isLoading } = useVehicleModels()
+  const { data, isLoading, isError, refetch } = useVehicleModels()
   const deleteMutation = useDeleteVehicleModel()
 
   const [formState, setFormState] = useState<FormState>(null)
@@ -106,19 +107,17 @@ export function VehicleModelsPage() {
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columnCount} className="text-muted-foreground text-center">
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columnCount} className="text-muted-foreground text-center">
-                  No vehicle models yet — add one to get started.
-                </TableCell>
-              </TableRow>
-            ) : (
+            <TableStatusRow
+              colSpan={columnCount}
+              isLoading={isLoading}
+              isError={isError}
+              isEmpty={!isLoading && !isError && table.getRowModel().rows.length === 0}
+              resourceLabel="vehicle models"
+              emptyMessage="No vehicle models yet — add one to get started."
+              onRetry={refetch}
+            />
+            {!isLoading &&
+              !isError &&
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
@@ -151,8 +150,7 @@ export function VehicleModelsPage() {
                     </TableCell>
                   )}
                 </TableRow>
-              ))
-            )}
+              ))}
           </TableBody>
         </Table>
       </div>

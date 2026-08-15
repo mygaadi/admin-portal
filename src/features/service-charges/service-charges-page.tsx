@@ -3,6 +3,7 @@ import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tan
 
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
+import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ServiceChargeFormDialog } from "@/features/service-charges/service-charge-form-dialog"
@@ -34,7 +35,7 @@ const columns: ColumnDef<ServiceCharge>[] = [
 
 export function ServiceChargesPage() {
   const isAdmin = useIsAdmin()
-  const { data, isLoading } = useServiceCharges()
+  const { data, isLoading, isError, refetch } = useServiceCharges()
   const [editing, setEditing] = useState<ServiceCharge | null>(null)
 
   const table = useReactTable({
@@ -79,19 +80,17 @@ export function ServiceChargesPage() {
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columnCount} className="text-muted-foreground text-center">
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columnCount} className="text-muted-foreground text-center">
-                  No service charges configured yet.
-                </TableCell>
-              </TableRow>
-            ) : (
+            <TableStatusRow
+              colSpan={columnCount}
+              isLoading={isLoading}
+              isError={isError}
+              isEmpty={!isLoading && !isError && table.getRowModel().rows.length === 0}
+              resourceLabel="service charges"
+              emptyMessage="No service charges configured yet."
+              onRetry={refetch}
+            />
+            {!isLoading &&
+              !isError &&
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
@@ -113,8 +112,7 @@ export function ServiceChargesPage() {
                     </TableCell>
                   )}
                 </TableRow>
-              ))
-            )}
+              ))}
           </TableBody>
         </Table>
       </div>
