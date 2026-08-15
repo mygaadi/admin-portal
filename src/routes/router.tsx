@@ -8,6 +8,7 @@ import { DashboardPage } from "@/features/dashboard/dashboard-page"
 import { MyBookingsPage } from "@/features/my-bookings/my-bookings-page"
 import { MyStationPage } from "@/features/my-station/my-station-page"
 import { ServiceChargesPage } from "@/features/service-charges/service-charges-page"
+import { ServiceStationInventoryPage } from "@/features/service-stations/service-station-inventory-page"
 import { ServiceStationsPage } from "@/features/service-stations/service-stations-page"
 import { SparePartsPage } from "@/features/spare-parts/spare-parts-page"
 import { VehicleModelsPage } from "@/features/vehicle-models/vehicle-models-page"
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
             element: <RequireRole role="ADMIN" />,
             children: [
               { path: "/service-stations", element: <ServiceStationsPage /> },
+              {
+                path: "/service-stations/:stationId/inventory",
+                element: <ServiceStationInventoryPage />,
+              },
               { path: "/bookings", element: <BookingsPage /> },
               { path: "/create-station-manager", element: <CreateStationManagerPage /> },
             ],
