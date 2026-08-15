@@ -8,7 +8,7 @@ import { StationInventorySection } from "@/features/station-inventory/station-in
 // (GET/PUT /api/service-stations/{stationId}/inventory) but no endpoint to
 // look up *which* station the authenticated Station Manager is assigned to
 // (no GET /api/service-stations/me). Standing in with a fixed mock station
-// (MOCK_MY_STATION_ID) until that's confirmed — see HANDOFF.md open
+// (MOCK_MY_STATION_ID) until that's confirmed — see CLAUDE.md open
 // questions.
 export function MyStationPage() {
   const { data: station } = useServiceStation(MOCK_MY_STATION_ID)

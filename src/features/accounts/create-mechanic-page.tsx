@@ -4,7 +4,7 @@ import { PlaceholderPage } from "@/components/placeholder-page"
 // (2026-08-15) — Admin or Station Manager can create a Mechanic account —
 // but no such endpoint is documented anywhere in PRD.md. Confirm the real
 // endpoint/shape with the backend dev before building this for real — see
-// HANDOFF.md open question #1.
+// CLAUDE.md open question #1.
 export function CreateMechanicPage() {
   return (
     <PlaceholderPage

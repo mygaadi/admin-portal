@@ -129,7 +129,7 @@ export function ServiceStationFormDialog({
             </div>
           </div>
           <p className="text-muted-foreground -mt-2 text-xs">
-            No lookup exists yet for valid location/manager IDs (see HANDOFF.md). Mock IDs:
+            No lookup exists yet for valid location/manager IDs (see CLAUDE.md). Mock IDs:
             locations 101–103, managers 501–503.
           </p>
           <div className="flex flex-col gap-2">

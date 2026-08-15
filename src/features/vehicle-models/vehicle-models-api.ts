@@ -2,7 +2,7 @@ import { createMockResource } from "@/lib/mock-resource"
 
 // TODO(api-integration): replace the mock resource below with real calls
 // through `@/lib/api-client` once GET/POST/PUT/DELETE /api/vehicle-models
-// are confirmed against the live backend (see HANDOFF.md). Keep the
+// are confirmed against the live backend (see CLAUDE.md). Keep the
 // `vehicleModelsApi` function signatures unchanged so callers don't need
 // to change.
 

@@ -6,7 +6,7 @@ import { createMockResource } from "@/lib/mock-resource"
 // PUT /api/service-requests/{id}/status are confirmed live.
 //
 // Assign-mechanic-by-Mechanic-role is one of the 3 unresolved mind-map/PRD
-// conflicts (see HANDOFF.md) — doesn't affect this portal directly since
+// conflicts (see CLAUDE.md) — doesn't affect this portal directly since
 // Mechanic isn't a login role here, only Admin/Station Manager.
 
 export type BookingStatus = "REQUESTED" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"

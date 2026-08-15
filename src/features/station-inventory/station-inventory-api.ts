@@ -55,6 +55,6 @@ export const stationInventoryApi = {
 }
 
 // Station Managers are assigned to exactly one station, but no endpoint
-// documents how to look that up (HANDOFF.md open question) — stand in with
+// documents how to look that up (CLAUDE.md open question) — stand in with
 // a fixed mock station until that's confirmed.
 export const MOCK_MY_STATION_ID = 1

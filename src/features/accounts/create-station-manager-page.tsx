@@ -4,7 +4,7 @@ import { PlaceholderPage } from "@/components/placeholder-page"
 // (2026-08-15) — Admin can create a Station Manager account — but no such
 // endpoint is documented anywhere in PRD.md. POST /api/auth/register has no
 // role field and always creates a CUSTOMER. Confirm the real endpoint/shape
-// with the backend dev before building this for real — see HANDOFF.md open
+// with the backend dev before building this for real — see CLAUDE.md open
 // question #1.
 export function CreateStationManagerPage() {
   return (

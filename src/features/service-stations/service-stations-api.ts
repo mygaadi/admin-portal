@@ -3,7 +3,7 @@ import { createMockResource } from "@/lib/mock-resource"
 // TODO(api-integration): replace with real calls through `@/lib/api-client`
 // once GET/POST/PUT/DELETE /api/service-stations are confirmed live.
 //
-// locationId and managerId have no documented listing endpoint (HANDOFF.md
+// locationId and managerId have no documented listing endpoint (CLAUDE.md
 // open question #2) — real Admin users would hit the same problem picking
 // valid IDs. The lookups below are mock-only stand-ins for what a real
 // location/user-search endpoint would resolve server-side.
