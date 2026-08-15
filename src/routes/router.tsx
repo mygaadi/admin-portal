@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router"
 
 import { LoginPage } from "@/features/auth/login-page"
+import { BookingDetailPage } from "@/features/bookings/booking-detail-page"
 import { BookingsPage } from "@/features/bookings/bookings-page"
 import { CreateMechanicPage } from "@/features/accounts/create-mechanic-page"
 import { CreateStationManagerPage } from "@/features/accounts/create-station-manager-page"
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
                 element: <ServiceStationInventoryPage />,
               },
               { path: "/bookings", element: <BookingsPage /> },
+              { path: "/bookings/:bookingId", element: <BookingDetailPage /> },
               { path: "/create-station-manager", element: <CreateStationManagerPage /> },
             ],
           },
@@ -55,6 +57,7 @@ export const router = createBrowserRouter([
             children: [
               { path: "/my-station", element: <MyStationPage /> },
               { path: "/my-bookings", element: <MyBookingsPage /> },
+              { path: "/my-bookings/:bookingId", element: <BookingDetailPage /> },
             ],
           },
         ],
