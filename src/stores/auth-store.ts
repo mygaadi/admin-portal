@@ -28,3 +28,9 @@ export const useAuthStore = create<AuthState>()(
     { name: "admin-portal-auth" }
   )
 )
+
+// Catalog/Finance screens are shared between roles but editable by Admin
+// only — Station Manager sees them read-only.
+export function useIsAdmin() {
+  return useAuthStore((state) => state.user?.role === "ADMIN")
+}

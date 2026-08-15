@@ -2,13 +2,18 @@ import { createBrowserRouter } from "react-router"
 
 import { LoginPage } from "@/features/auth/login-page"
 import { BookingsPage } from "@/features/bookings/bookings-page"
+import { CreateMechanicPage } from "@/features/accounts/create-mechanic-page"
+import { CreateStationManagerPage } from "@/features/accounts/create-station-manager-page"
 import { DashboardPage } from "@/features/dashboard/dashboard-page"
+import { MyBookingsPage } from "@/features/my-bookings/my-bookings-page"
+import { MyStationPage } from "@/features/my-station/my-station-page"
 import { ServiceChargesPage } from "@/features/service-charges/service-charges-page"
 import { ServiceStationsPage } from "@/features/service-stations/service-stations-page"
 import { SparePartsPage } from "@/features/spare-parts/spare-parts-page"
 import { VehicleModelsPage } from "@/features/vehicle-models/vehicle-models-page"
 import { VehicleVariantsPage } from "@/features/vehicle-variants/vehicle-variants-page"
 import { ProtectedRoute } from "@/routes/protected-route"
+import { RequireRole } from "@/routes/require-role"
 import { RootLayout } from "@/routes/root-layout"
 
 export const router = createBrowserRouter([
@@ -23,12 +28,30 @@ export const router = createBrowserRouter([
         element: <RootLayout />,
         children: [
           { path: "/", element: <DashboardPage /> },
+          // Shared — Admin can edit, Station Manager sees these read-only.
           { path: "/vehicle-models", element: <VehicleModelsPage /> },
           { path: "/vehicle-variants", element: <VehicleVariantsPage /> },
-          { path: "/service-stations", element: <ServiceStationsPage /> },
           { path: "/spare-parts", element: <SparePartsPage /> },
           { path: "/service-charges", element: <ServiceChargesPage /> },
-          { path: "/bookings", element: <BookingsPage /> },
+          // Shared — Admin or Station Manager can create a Mechanic account.
+          { path: "/create-mechanic", element: <CreateMechanicPage /> },
+          // Admin-only — cross-station.
+          {
+            element: <RequireRole role="ADMIN" />,
+            children: [
+              { path: "/service-stations", element: <ServiceStationsPage /> },
+              { path: "/bookings", element: <BookingsPage /> },
+              { path: "/create-station-manager", element: <CreateStationManagerPage /> },
+            ],
+          },
+          // Station Manager-only — scoped to their own station.
+          {
+            element: <RequireRole role="STATION_MANAGER" />,
+            children: [
+              { path: "/my-station", element: <MyStationPage /> },
+              { path: "/my-bookings", element: <MyBookingsPage /> },
+            ],
+          },
         ],
       },
     ],

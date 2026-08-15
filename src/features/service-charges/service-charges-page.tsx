@@ -1,5 +1,5 @@
 import { PlaceholderPage } from "@/components/placeholder-page"
 
 export function ServiceChargesPage() {
-  return <PlaceholderPage title="Service Charges" />
+  return <PlaceholderPage eyebrow="Finance" title="Service Charges" />
 }

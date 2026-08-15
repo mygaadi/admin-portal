@@ -18,9 +18,34 @@ Three separate products cover the PRD's four roles:
 
 1. **Customer app** (mobile, Expo/React Native) — already built, covers the
    Customer role only.
-2. **Station Manager + Mechanic app** (mobile) — covers both roles in one
-   app, role-gated views. Not started yet.
-3. **Admin portal** (web) — this project. Covers the Admin role only.
+2. **Mechanic app** (mobile) — not started yet. (Originally scoped as a
+   combined "Station Manager + Mechanic" mobile app; that changed — see
+   below.)
+3. **Admin portal** (web) — this project. **Decision (2026-08-15): this web
+   app now covers both the Admin and Station Manager roles**, role-gated by
+   module — not Admin-only as originally scoped. Mechanic is still mobile-only.
+
+### Role-gated module breakdown
+
+- **Admin**: full CRUD on Vehicle Models/Variants/Spare Parts, full CRUD on
+  Service Stations (all stations), cross-station Bookings (view any
+  station's bookings, assign mechanic, update status), edit Service Charges.
+- **Station Manager**: Vehicle Models/Variants/Spare Parts and Service
+  Charges are **read-only**; "My Station" (view + edit inventory for their
+  one assigned station, not full station CRUD) and "My Bookings" (their
+  station's bookings only — assign mechanic, update status, manage parts
+  used) replace Admin's Service Stations/Bookings screens.
+- Implemented in code as: `getNavGroups(role)` in `src/routes/nav-items.ts`
+  (per-role sidebar), `RequireRole` (`src/routes/require-role.tsx`) guarding
+  Admin-only (`/service-stations`, `/bookings`) and Station-Manager-only
+  (`/my-station`, `/my-bookings`) routes, and `useIsAdmin()`
+  (`src/stores/auth-store.ts`) gating edit affordances on the screens shared
+  between both roles.
+- **Open gap**: the PRD documents no `GET /api/service-stations/me` (or
+  equivalent) for a Station Manager to look up which station they're
+  assigned to — only `GET /api/service-stations/me/service-requests` for
+  bookings. Confirm with the backend dev before building "My Station" for
+  real; noted as a TODO in `src/features/my-station/my-station-page.tsx`.
 
 ## Admin portal's scope, per the PRD
 
@@ -103,9 +128,15 @@ yet:
    get created?** `POST /api/auth/register` has no `role` field in its
    documented request body, and empirically it always creates a `CUSTOMER`
    account. There's no documented endpoint for creating a non-Customer
-   user. You need at least one real Admin login to test anything here —
-   ask the backend dev how to get one (direct DB seed? an undocumented
-   endpoint? role promotion?).
+   user. **Partially resolved (2026-08-15)**: a MindMeister mind map
+   ("My Garage" product map, not part of the PRD) shows dedicated
+   "Create Station Manager" (Admin-only) and "Create Mechanic" (Station
+   Manager + Admin) features — so conceptually Admin creates Station
+   Managers, and Station Manager or Admin creates Mechanics. The actual
+   API endpoint/shape for this is still undocumented anywhere — confirm
+   with the backend dev before building. You still need at least one real
+   Admin login **and** one real Station Manager login to test anything
+   here (this portal now covers both roles — see above).
 2. **How does Admin find/list "eligible" Station Manager users** to assign
    when creating a station (§10.2 requires an existing `managerId`)? No
    listing/search endpoint for users-by-role is documented.
@@ -113,6 +144,26 @@ yet:
    customers, list mechanics, deactivate an account, etc.) — the PRD's
    Admin description ("full platform administration") is vague; the
    documented endpoints only cover catalog/station/charge data, not people.
+
+### Conflicts between the mind map and the PRD — unresolved, do not build against either yet
+
+A MindMeister product mind map surfaced after the PRD was written (2026-08-15) confirms
+most of the PRD's access-control rules but conflicts with it in three places. Current
+code follows the **PRD** for all three (unchanged) — these are flagged as open
+decisions, not resolved either way:
+
+1. **Service Charge edit rights.** Mind map tags Create/Update/Delete "Service Type" as
+   **Station Manager only** (no Admin tag at all). PRD §15.2 says the opposite:
+   "Admin: Can update service charges. Station Manager: Read-only." Direct
+   contradiction, not just an addition.
+2. **Update/Delete Station.** Mind map grants these to Station Manager in addition to
+   Admin. PRD's section headings are explicit: "Update Station (Admin)" / "Delete a
+   Station (Admin)".
+3. **Assign Mechanic to a booking.** Mind map tags Mechanic as able to do this
+   (self-assign?). PRD §13.10 restricts it to Station Manager/Admin only.
+
+Resolve with the backend dev / product owner before building Service Charges,
+Service Station update/delete, or the assign-mechanic flow for real.
 
 ## Suggested starting point for tech stack (not decided — discuss fresh)
 
@@ -129,8 +180,9 @@ Reusables) don't transfer — this is a plain web app.
 - [ ] Copy `PRD.md` into the new repo's root.
 - [ ] Copy this handoff doc in too, or fold its contents into the new
       project's `CLAUDE.md`.
-- [ ] Get a real Admin login from the backend dev (see open question #1)
-      before building the login screen against real auth.
+- [ ] Get a real Admin login **and** a real Station Manager login from the
+      backend dev (see open question #1) before building the login screen
+      against real auth.
 - [ ] Same backend base URL as customer-app, same "it's an ephemeral
       tunnel, expect to update it" caveat.
 - [ ] Verify every Admin-specific endpoint live (curl) before building a

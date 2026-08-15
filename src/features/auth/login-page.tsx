@@ -16,7 +16,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api-client"
-import { useAuthStore } from "@/stores/auth-store"
+import { useAuthStore, type Role } from "@/stores/auth-store"
+
+const PORTAL_ROLES: Role[] = ["ADMIN", "STATION_MANAGER"]
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -31,10 +33,10 @@ export function LoginPage() {
   const mutation = useMutation({
     mutationFn: async (input: LoginInput) => {
       const data = await login(input.phoneNumber, input.password)
-      if (data.role !== "ADMIN") {
+      if (!PORTAL_ROLES.includes(data.role)) {
         throw new ApiError(
           403,
-          `This portal is for Admin accounts only — this account is a ${data.role
+          `This portal is for Admin and Station Manager accounts — this account is a ${data.role
             .toLowerCase()
             .replace("_", " ")} account.`
         )
@@ -55,12 +57,22 @@ export function LoginPage() {
   const errorMessage =
     mutation.error instanceof ApiError ? mutation.error.message : mutation.error ? "Login failed" : null
 
+  function handleMockLogin(role: Role) {
+    storeLogin("mock-dev-token", {
+      userId: 0,
+      firstName: "Mock",
+      lastName: role === "ADMIN" ? "Admin" : "Station Manager",
+      role,
+    })
+    navigate("/", { replace: true })
+  }
+
   return (
     <div className="flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>mygaadi Admin</CardTitle>
-          <CardDescription>Sign in with your Admin account.</CardDescription>
+          <CardDescription>Sign in with your Admin or Station Manager account.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -96,6 +108,30 @@ export function LoginPage() {
               {mutation.isPending ? "Signing in…" : "Sign in"}
             </Button>
           </form>
+          {import.meta.env.DEV && (
+            <div className="border-border mt-4 flex flex-col gap-2 border-t pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => handleMockLogin("ADMIN")}
+              >
+                Continue as mock Admin (dev only)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => handleMockLogin("STATION_MANAGER")}
+              >
+                Continue as mock Station Manager (dev only)
+              </Button>
+              <p className="text-muted-foreground mt-1 text-xs">
+                No real login exists yet — this skips auth so you can preview screens
+                against mock data. Stripped out of production builds.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

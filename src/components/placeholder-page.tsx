@@ -1,15 +1,16 @@
+import { PageHeader } from "@/components/page-header"
+
 interface PlaceholderPageProps {
+  eyebrow: string
   title: string
   description?: string
 }
 
-export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
+export function PlaceholderPage({ eyebrow, title, description }: PlaceholderPageProps) {
   return (
     <div>
-      <h1 className="text-lg font-medium">{title}</h1>
-      <p className="text-muted-foreground mt-1 text-sm">
-        {description ?? "Coming soon."}
-      </p>
+      <PageHeader eyebrow={eyebrow} title={title} />
+      <p className="text-muted-foreground text-sm">{description ?? "Coming soon."}</p>
     </div>
   )
 }

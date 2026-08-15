@@ -1,5 +1,7 @@
 import { PlaceholderPage } from "@/components/placeholder-page"
 
 export function DashboardPage() {
-  return <PlaceholderPage title="Dashboard" description="Overview coming soon." />
+  return (
+    <PlaceholderPage eyebrow="Overview" title="Dashboard" description="Overview coming soon." />
+  )
 }
