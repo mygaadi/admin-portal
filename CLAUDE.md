@@ -41,7 +41,7 @@ Every feature (`src/features/*`) is fully built and working against an **in-memo
 - Base URL is a Cloudflare tunnel, ephemeral (`trycloudflare.com` — expect it to change whenever the backend dev restarts it): as of 2026-08-15, `https://downloading-bible-shoot-gulf.trycloudflare.com` (see `.env` / `.env.example`, `VITE_API_BASE_URL`). Health check: `GET /api/public/health`.
 - Auth: single `accessToken`, no refresh token, per the PRD. `Authorization: Bearer <token>` header. A 401 means the session is dead — `src/lib/api-client.ts` logs out automatically on 401, no retry/refresh flow exists.
 - Login: `POST /api/auth/login` with `{ phoneNumber, password }` → `{ accessToken, tokenType, userId, firstName, lastName, role }`.
-- Dev-only mock login buttons exist on the login page (`import.meta.env.DEV` gated, stripped from production builds) to preview both roles without real credentials.
+- Mock login buttons exist on the login page to preview both roles without real credentials. Shown when `import.meta.env.DEV` (always true under `vite dev`) **or** `VITE_ENABLE_MOCK_AUTH=true` is set (for demo/preview deployments — e.g. Vercel — that have no real backend to log into yet). Unset that env var once real login exists; anyone with the deployment URL can otherwise use it to get full Admin/Station Manager access to the mock data.
 
 ## Confirmed PRD vs. real-API discrepancies
 

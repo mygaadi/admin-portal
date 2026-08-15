@@ -20,6 +20,13 @@ import { useAuthStore, type Role } from "@/stores/auth-store"
 
 const PORTAL_ROLES: Role[] = ["ADMIN", "STATION_MANAGER"]
 
+// import.meta.env.DEV is only true under `vite dev` — it's always false in a
+// production build (including Vercel's), so the mock-login bypass normally
+// disappears there too. VITE_ENABLE_MOCK_AUTH lets a specific deployment
+// (e.g. a demo/preview build with no real backend to log into yet) opt
+// back in via an env var, without touching this condition again.
+const MOCK_AUTH_ENABLED = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK_AUTH === "true"
+
 export function LoginPage() {
   const navigate = useNavigate()
   const storeLogin = useAuthStore((state) => state.login)
@@ -108,7 +115,7 @@ export function LoginPage() {
               {mutation.isPending ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-          {import.meta.env.DEV && (
+          {MOCK_AUTH_ENABLED && (
             <div className="border-border mt-4 flex flex-col gap-2 border-t pt-4">
               <Button
                 type="button"
@@ -116,7 +123,7 @@ export function LoginPage() {
                 className="w-full"
                 onClick={() => handleMockLogin("ADMIN")}
               >
-                Continue as mock Admin (dev only)
+                Continue as mock Admin
               </Button>
               <Button
                 type="button"
@@ -124,11 +131,11 @@ export function LoginPage() {
                 className="w-full"
                 onClick={() => handleMockLogin("STATION_MANAGER")}
               >
-                Continue as mock Station Manager (dev only)
+                Continue as mock Station Manager
               </Button>
               <p className="text-muted-foreground mt-1 text-xs">
                 No real login exists yet — this skips auth so you can preview screens
-                against mock data. Stripped out of production builds.
+                against mock data.
               </p>
             </div>
           )}
