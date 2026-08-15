@@ -112,7 +112,7 @@ export function BookingDetailPage() {
             <CardTitle>Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
               <DetailField label="Station" value={booking.stationName} />
               <DetailField label="Service type" value={humanizeEnum(booking.serviceType)} />
               <DetailField
@@ -282,7 +282,7 @@ function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdi
       </div>
 
       {canEdit && (
-        <div className="flex items-end gap-2">
+        <div className="flex flex-wrap items-end gap-2">
           <div className="flex flex-col gap-1.5">
             <Label>Spare part</Label>
             <Select
