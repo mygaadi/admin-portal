@@ -1,14 +1,17 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
 
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
 import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ServiceChargeFormDialog } from "@/features/service-charges/service-charge-form-dialog"
 import type { ServiceCharge } from "@/features/service-charges/service-charges-api"
 import { useServiceCharges } from "@/features/service-charges/use-service-charges"
+import { useServiceStations } from "@/features/service-stations/use-service-stations"
+import { MOCK_MY_STATION_ID } from "@/features/station-inventory/station-inventory-api"
 import { formatCurrency, humanizeEnum } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useIsAdmin } from "@/stores/auth-store"
@@ -35,7 +38,18 @@ const columns: ColumnDef<ServiceCharge>[] = [
 
 export function ServiceChargesPage() {
   const isAdmin = useIsAdmin()
-  const { data, isLoading, isError, refetch } = useServiceCharges()
+  const { data: stations } = useServiceStations()
+  const [adminStationId, setAdminStationId] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    if (isAdmin && adminStationId === undefined && stations && stations.length > 0) {
+      setAdminStationId(stations[0].id)
+    }
+  }, [isAdmin, stations, adminStationId])
+
+  const stationId = isAdmin ? (adminStationId ?? -1) : MOCK_MY_STATION_ID
+
+  const { data, isLoading, isError, refetch } = useServiceCharges(stationId)
   const [editing, setEditing] = useState<ServiceCharge | null>(null)
 
   const table = useReactTable({
@@ -51,7 +65,26 @@ export function ServiceChargesPage() {
       <PageHeader
         eyebrow="Finance"
         title="Service Charges"
-        description="Standard charges applicable to each type of vehicle service."
+        description="Standard charges applicable to each type of vehicle service, per station."
+        action={
+          isAdmin && (
+            <Select
+              value={adminStationId}
+              onValueChange={(value) => setAdminStationId(value ?? undefined)}
+            >
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="Select a station" />
+              </SelectTrigger>
+              <SelectContent>
+                {stations?.map((station) => (
+                  <SelectItem key={station.id} value={station.id}>
+                    {station.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )
+        }
       />
 
       <MockDataNotice />
@@ -86,7 +119,7 @@ export function ServiceChargesPage() {
               isError={isError}
               isEmpty={!isLoading && !isError && table.getRowModel().rows.length === 0}
               resourceLabel="service charges"
-              emptyMessage="No service charges configured yet."
+              emptyMessage="No service charges configured for this station yet."
               onRetry={refetch}
             />
             {!isLoading &&

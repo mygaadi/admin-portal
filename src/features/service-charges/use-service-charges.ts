@@ -2,20 +2,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { serviceChargesApi } from "@/features/service-charges/service-charges-api"
 
-const serviceChargesQueryKey = ["service-charges"]
+const serviceChargesQueryKey = (stationId: number) => ["service-charges", stationId]
 
-export function useServiceCharges() {
+export function useServiceCharges(stationId: number) {
   return useQuery({
-    queryKey: serviceChargesQueryKey,
-    queryFn: serviceChargesApi.list,
+    queryKey: serviceChargesQueryKey(stationId),
+    queryFn: () => serviceChargesApi.listByStation(stationId),
   })
 }
 
-export function useUpdateServiceCharge() {
+export function useUpdateServiceCharge(stationId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, amount }: { id: number; amount: number }) =>
       serviceChargesApi.update(id, amount),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: serviceChargesQueryKey }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: serviceChargesQueryKey(stationId) }),
   })
 }

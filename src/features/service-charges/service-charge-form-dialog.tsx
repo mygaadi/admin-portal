@@ -34,7 +34,7 @@ export function ServiceChargeFormDialog({
   onOpenChange,
   serviceCharge,
 }: ServiceChargeFormDialogProps) {
-  const updateMutation = useUpdateServiceCharge()
+  const updateMutation = useUpdateServiceCharge(serviceCharge?.stationId ?? -1)
 
   const {
     register,
