@@ -27,13 +27,11 @@ export interface ServiceStation {
   updatedAt: string
 }
 
+// TODO(location): addressLine/city/state/latitude/longitude temporarily removed —
+// locationId isn't required by the backend, so the location-creation-first flow below
+// is commented out for now. Re-add these fields to re-enable it.
 export interface ServiceStationInput {
   name: string
-  addressLine: string
-  city: string
-  state: string
-  latitude: number
-  longitude: number
   managerId: number
   phone: string | null
   email: string | null
@@ -60,18 +58,18 @@ interface LocationResponse {
   longitude: number
 }
 
-function locationPayload(input: ServiceStationInput) {
-  return {
-    addressLine: input.addressLine,
-    city: input.city,
-    state: input.state,
-    latitude: input.latitude,
-    longitude: input.longitude,
-    isDetected: false,
-  }
-}
+// function locationPayload(input: ServiceStationInput) {
+//   return {
+//     addressLine: input.addressLine,
+//     city: input.city,
+//     state: input.state,
+//     latitude: input.latitude,
+//     longitude: input.longitude,
+//     isDetected: false,
+//   }
+// }
 
-function stationPayload(input: ServiceStationInput, locationId: number) {
+function stationPayload(input: ServiceStationInput, locationId: number | null) {
   return {
     name: input.name,
     locationId,
@@ -89,11 +87,13 @@ export const serviceStationsApi = {
   getLocation: (locationId: number) =>
     api.get<LocationResponse>(`/api/users/me/locations/${locationId}`),
   create: async (input: ServiceStationInput) => {
-    const location = await api.post<LocationResponse>("/api/users/me/locations", locationPayload(input))
-    return api.post<ServiceStation>("/api/service-stations", stationPayload(input, location.id))
+    // TODO(location): location-creation-first flow disabled — see ServiceStationInput comment.
+    // const location = await api.post<LocationResponse>("/api/users/me/locations", locationPayload(input))
+    // return api.post<ServiceStation>("/api/service-stations", stationPayload(input, location.id))
+    return api.post<ServiceStation>("/api/service-stations", stationPayload(input, null))
   },
-  update: async (id: number, input: ServiceStationInput, locationId: number) => {
-    await api.put<LocationResponse>(`/api/users/me/locations/${locationId}`, locationPayload(input))
+  update: async (id: number, input: ServiceStationInput, locationId: number | null) => {
+    // await api.put<LocationResponse>(`/api/users/me/locations/${locationId}`, locationPayload(input))
     return api.put<ServiceStation>(`/api/service-stations/${id}`, stationPayload(input, locationId))
   },
   remove: (id: number) => api.delete<void>(`/api/service-stations/${id}`),

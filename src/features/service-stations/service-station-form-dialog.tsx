@@ -3,7 +3,6 @@ import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
-import { LocationPicker, type LocationValue } from "@/components/location-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,7 +22,6 @@ import {
 } from "@/features/service-stations/service-station-schema"
 import {
   MOCK_MANAGERS,
-  serviceStationsApi,
   type ServiceStation,
 } from "@/features/service-stations/service-stations-api"
 import {
@@ -52,8 +50,6 @@ export function ServiceStationFormDialog({
     control,
     handleSubmit,
     reset,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<ServiceStationFormValues>({
     resolver: zodResolver(serviceStationSchema),
@@ -65,50 +61,19 @@ export function ServiceStationFormDialog({
     reset({
       name: serviceStation?.name ?? "",
       managerId: serviceStation?.managerId ?? undefined,
-      addressLine: serviceStation?.addressLine ?? "",
-      city: serviceStation?.city ?? "",
-      state: serviceStation?.state ?? "",
-      latitude: undefined,
-      longitude: undefined,
       phone: serviceStation?.phone ?? "",
       email: serviceStation?.email ?? "",
       capacity: serviceStation?.capacity,
     })
 
-    if (serviceStation) {
-      serviceStationsApi.getLocation(serviceStation.locationId).then((location) => {
-        setValue("latitude", location.latitude)
-        setValue("longitude", location.longitude)
-      })
-    }
-  }, [open, serviceStation, reset, setValue])
-
-  const addressLine = watch("addressLine")
-  const city = watch("city")
-  const state = watch("state")
-  const latitude = watch("latitude")
-  const longitude = watch("longitude")
-  const locationValue: LocationValue | null = addressLine
-    ? { addressLine, city, state, latitude, longitude }
-    : null
-
-  function handleLocationChange(location: LocationValue) {
-    setValue("addressLine", location.addressLine, { shouldValidate: true })
-    setValue("city", location.city)
-    setValue("state", location.state)
-    setValue("latitude", location.latitude)
-    setValue("longitude", location.longitude)
-  }
+    // TODO(location): used to fetch the station's location (lat/lng) here to prefill
+    // the LocationPicker on edit — disabled along with the picker itself, see below.
+  }, [open, serviceStation, reset])
 
   function onSubmit(values: ServiceStationFormValues) {
     const input = {
       name: values.name,
       managerId: values.managerId,
-      addressLine: values.addressLine,
-      city: values.city,
-      state: values.state,
-      latitude: values.latitude,
-      longitude: values.longitude,
       phone: values.phone || null,
       email: values.email || null,
       capacity: values.capacity,
@@ -173,13 +138,9 @@ export function ServiceStationFormDialog({
               <p className="text-destructive text-sm">{errors.managerId.message}</p>
             )}
           </div>
-          <div className="flex flex-col gap-2">
-            <Label>Location</Label>
-            <LocationPicker value={locationValue} onChange={handleLocationChange} />
-            {errors.addressLine && (
-              <p className="text-destructive text-sm">{errors.addressLine.message}</p>
-            )}
-          </div>
+          {/* TODO(location): location picker temporarily disabled — locationId isn't
+              required by the backend. See service-stations-api.ts / service-station-schema.ts
+              for the rest of what's commented out. */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="phone">Phone</Label>
             <Input id="phone" type="tel" {...register("phone")} />

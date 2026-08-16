@@ -17,7 +17,7 @@ export function MyStationPage() {
         title={station?.name ?? "My Station"}
         description={
           station
-            ? `${station.addressLine}, ${station.city} — capacity ${station.capacity}`
+            ? `${station.addressLine && station.city ? `${station.addressLine}, ${station.city} — ` : ""}capacity ${station.capacity}`
             : "View and edit your station's inventory."
         }
       />
