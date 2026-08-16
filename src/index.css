@@ -174,4 +174,18 @@
   h1, h2, h3, h4 {
     @apply font-heading;
     }
+  /* Browsers force their own background/text color on autofilled inputs,
+     ignoring site CSS — this repaints them with our own theme colors
+     instead of the browser's default (often a jarring light yellow/white
+     that breaks dark mode). */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--foreground);
+    -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
+    box-shadow: 0 0 0 1000px var(--background) inset;
+    transition: background-color 9999s ease-in-out 0s;
+    caret-color: var(--foreground);
+    }
 }
