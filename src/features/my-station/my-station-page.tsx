@@ -1,17 +1,14 @@
 import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
-import { useServiceStation } from "@/features/service-stations/use-service-stations"
-import { MOCK_MY_STATION_ID } from "@/features/station-inventory/station-inventory-api"
+import { useMyStation } from "@/features/service-stations/use-service-stations"
 import { StationInventorySection } from "@/features/station-inventory/station-inventory-section"
 
-// TODO(api-integration): the PRD documents station-scoped inventory
-// (GET/PUT /api/service-stations/{stationId}/inventory) but no endpoint to
-// look up *which* station the authenticated Station Manager is assigned to
-// (no GET /api/service-stations/me). Standing in with a fixed mock station
-// (MOCK_MY_STATION_ID) until that's confirmed — see CLAUDE.md open
-// questions.
+// Station identity is real (GET /api/service-stations?managerId=, resolved
+// via useMyStation). The inventory section underneath stays mock — the real
+// backend still has a global Admin-managed spare-parts catalog, not
+// station-owned (see CLAUDE.md, Spare Parts/Station Inventory).
 export function MyStationPage() {
-  const { data: station } = useServiceStation(MOCK_MY_STATION_ID)
+  const { data: station } = useMyStation()
 
   return (
     <div>
@@ -27,7 +24,7 @@ export function MyStationPage() {
 
       <MockDataNotice />
 
-      <StationInventorySection stationId={MOCK_MY_STATION_ID} canEdit />
+      {station && <StationInventorySection stationId={station.id} canEdit />}
     </div>
   )
 }

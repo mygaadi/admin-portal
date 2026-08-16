@@ -4,7 +4,6 @@ import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog"
-import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
 import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
@@ -64,8 +63,6 @@ export function ServiceStationsPage() {
         description="Stations available to service customer vehicles."
         action={<Button onClick={() => setFormState({ mode: "create" })}>New station</Button>}
       />
-
-      <MockDataNotice />
 
       <div className="border-border bg-card rounded-md border">
         <Table>

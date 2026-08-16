@@ -21,7 +21,11 @@ import {
   serviceStationSchema,
   type ServiceStationFormValues,
 } from "@/features/service-stations/service-station-schema"
-import { MOCK_MANAGERS, type ServiceStation } from "@/features/service-stations/service-stations-api"
+import {
+  MOCK_MANAGERS,
+  serviceStationsApi,
+  type ServiceStation,
+} from "@/features/service-stations/service-stations-api"
 import {
   useCreateServiceStation,
   useUpdateServiceStation,
@@ -56,32 +60,42 @@ export function ServiceStationFormDialog({
   })
 
   useEffect(() => {
-    if (open) {
-      reset({
-        name: serviceStation?.name ?? "",
-        managerId: serviceStation?.managerId,
-        addressLine: serviceStation?.addressLine ?? "",
-        city: serviceStation?.city ?? "",
-        latitude: serviceStation?.latitude,
-        longitude: serviceStation?.longitude,
-        phone: serviceStation?.phone ?? "",
-        email: serviceStation?.email ?? "",
-        capacity: serviceStation?.capacity,
-      } as ServiceStationFormValues)
+    if (!open) return
+
+    reset({
+      name: serviceStation?.name ?? "",
+      managerId: serviceStation?.managerId ?? undefined,
+      addressLine: serviceStation?.addressLine ?? "",
+      city: serviceStation?.city ?? "",
+      state: serviceStation?.state ?? "",
+      latitude: undefined,
+      longitude: undefined,
+      phone: serviceStation?.phone ?? "",
+      email: serviceStation?.email ?? "",
+      capacity: serviceStation?.capacity,
+    })
+
+    if (serviceStation) {
+      serviceStationsApi.getLocation(serviceStation.locationId).then((location) => {
+        setValue("latitude", location.latitude)
+        setValue("longitude", location.longitude)
+      })
     }
-  }, [open, serviceStation, reset])
+  }, [open, serviceStation, reset, setValue])
 
   const addressLine = watch("addressLine")
   const city = watch("city")
+  const state = watch("state")
   const latitude = watch("latitude")
   const longitude = watch("longitude")
   const locationValue: LocationValue | null = addressLine
-    ? { addressLine, city, latitude, longitude }
+    ? { addressLine, city, state, latitude, longitude }
     : null
 
   function handleLocationChange(location: LocationValue) {
     setValue("addressLine", location.addressLine, { shouldValidate: true })
     setValue("city", location.city)
+    setValue("state", location.state)
     setValue("latitude", location.latitude)
     setValue("longitude", location.longitude)
   }
@@ -92,6 +106,7 @@ export function ServiceStationFormDialog({
       managerId: values.managerId,
       addressLine: values.addressLine,
       city: values.city,
+      state: values.state,
       latitude: values.latitude,
       longitude: values.longitude,
       phone: values.phone || null,
@@ -100,7 +115,11 @@ export function ServiceStationFormDialog({
     }
 
     const request = isEditing
-      ? updateMutation.mutateAsync({ id: serviceStation!.id, input })
+      ? updateMutation.mutateAsync({
+          id: serviceStation!.id,
+          input,
+          locationId: serviceStation!.locationId,
+        })
       : createMutation.mutateAsync(input)
 
     request

@@ -5,6 +5,7 @@ export const serviceStationSchema = z.object({
   managerId: z.number({ message: "Select a station manager" }).int().positive(),
   addressLine: z.string().min(1, "Search and select a location"),
   city: z.string(),
+  state: z.string().min(1, "State is required"),
   latitude: z.number(),
   longitude: z.number(),
   phone: z.string().max(20, "Phone must not exceed 20 characters"),

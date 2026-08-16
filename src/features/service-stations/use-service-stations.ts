@@ -4,8 +4,21 @@ import {
   serviceStationsApi,
   type ServiceStationInput,
 } from "@/features/service-stations/service-stations-api"
+import { useAuthStore } from "@/stores/auth-store"
 
 const serviceStationsQueryKey = ["service-stations"]
+
+// Resolves the logged-in Station Manager's own station via
+// GET /api/service-stations?managerId= (CLAUDE.md open question #4).
+export function useMyStation() {
+  const userId = useAuthStore((state) => state.user?.userId)
+  return useQuery({
+    queryKey: ["service-stations", "mine", userId],
+    queryFn: () => serviceStationsApi.listByManager(userId!),
+    enabled: userId !== undefined,
+    select: (stations) => stations[0],
+  })
+}
 
 export function useServiceStations() {
   return useQuery({
@@ -33,8 +46,15 @@ export function useCreateServiceStation() {
 export function useUpdateServiceStation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id: number; input: ServiceStationInput }) =>
-      serviceStationsApi.update(id, input),
+    mutationFn: ({
+      id,
+      input,
+      locationId,
+    }: {
+      id: number
+      input: ServiceStationInput
+      locationId: number
+    }) => serviceStationsApi.update(id, input, locationId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: serviceStationsQueryKey }),
   })
 }

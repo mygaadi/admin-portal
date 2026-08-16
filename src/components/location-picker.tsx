@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 export interface LocationValue {
   addressLine: string
   city: string
+  state: string
   latitude: number
   longitude: number
 }
@@ -73,6 +74,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         result.address?.village ??
         result.address?.state ??
         "",
+      state: result.address?.state ?? "",
       latitude: Number(result.lat),
       longitude: Number(result.lon),
     })

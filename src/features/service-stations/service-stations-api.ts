@@ -1,23 +1,25 @@
-import { createMockResource } from "@/lib/mock-resource"
+import { api } from "@/lib/api-client"
 
-// TODO(api-integration): replace with real calls through `@/lib/api-client`
-// once GET/POST/PUT/DELETE /api/service-stations are confirmed live.
+// Wired to the real backend (confirmed against backend-service source,
+// 2026-08-16): GET/POST/PUT/DELETE /api/service-stations, plus a
+// location-creation-first step through /api/users/me/locations — the real
+// ServiceStationRequest takes a `locationId`, not inline address fields.
+// LocationController is scoped to the *logged-in user's own* locations, so
+// stations end up owned (location-wise) by whichever Admin created them.
 //
 // managerId has no documented listing endpoint (CLAUDE.md open question #2)
-// — MOCK_MANAGERS below stands in for what a real user-search-by-role
-// endpoint would return. Location is no longer a locationId reference (see
-// CLAUDE.md product-direction deviations) — addressLine/city/lat/lng are
-// captured directly via the location picker and stored inline.
+// — MOCK_MANAGERS stands in for what a real user-search-by-role endpoint
+// would return.
 
 export interface ServiceStation {
   id: number
   name: string
+  locationId: number
   addressLine: string
   city: string
-  latitude: number
-  longitude: number
-  managerId: number
-  managerName: string
+  state: string
+  managerId: number | null
+  managerName: string | null
   phone: string | null
   email: string | null
   capacity: number
@@ -29,6 +31,7 @@ export interface ServiceStationInput {
   name: string
   addressLine: string
   city: string
+  state: string
   latitude: number
   longitude: number
   managerId: number
@@ -48,57 +51,50 @@ export const MOCK_MANAGERS: Manager[] = [
   { id: 503, name: "Amit Shah" },
 ]
 
-function resolveManagerName(managerId: number) {
-  const manager = MOCK_MANAGERS.find((m) => m.id === managerId)
-  if (!manager) {
-    throw new Error(`Manager ${managerId} not found`)
-  }
-  return manager.name
+interface LocationResponse {
+  id: number
+  addressLine: string
+  city: string
+  state: string
+  latitude: number
+  longitude: number
 }
 
-const resource = createMockResource<ServiceStation>([
-  {
-    id: 1,
-    name: "ABC Motors Service Center",
-    addressLine: "123, Main Road, Indiranagar, Bangalore, Karnataka, India",
-    city: "Bangalore",
-    latitude: 12.9716,
-    longitude: 77.6412,
-    managerId: 501,
-    managerName: "John Doe",
-    phone: "+919876543210",
-    email: "abc.manager@example.com",
-    capacity: 50,
-    createdAt: "2026-01-05T10:00:00Z",
-    updatedAt: "2026-01-05T10:00:00Z",
-  },
-  {
-    id: 2,
-    name: "Metro Car Care",
-    addressLine: "45, Andheri West, Near Metro Station, Mumbai, Maharashtra, India",
-    city: "Mumbai",
-    latitude: 19.1197,
-    longitude: 72.8468,
-    managerId: 502,
-    managerName: "Jane Doe",
-    phone: "+919812345678",
-    email: "metro.manager@example.com",
-    capacity: 35,
-    createdAt: "2026-01-20T10:00:00Z",
-    updatedAt: "2026-01-20T10:00:00Z",
-  },
-])
+function locationPayload(input: ServiceStationInput) {
+  return {
+    addressLine: input.addressLine,
+    city: input.city,
+    state: input.state,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    isDetected: false,
+  }
+}
+
+function stationPayload(input: ServiceStationInput, locationId: number) {
+  return {
+    name: input.name,
+    locationId,
+    managerId: input.managerId,
+    phone: input.phone,
+    email: input.email,
+    capacity: input.capacity,
+  }
+}
 
 export const serviceStationsApi = {
-  list: () => resource.list(),
+  list: () => api.get<ServiceStation[]>("/api/service-stations"),
+  listByManager: (managerId: number) =>
+    api.get<ServiceStation[]>(`/api/service-stations?managerId=${managerId}`),
+  getLocation: (locationId: number) =>
+    api.get<LocationResponse>(`/api/users/me/locations/${locationId}`),
   create: async (input: ServiceStationInput) => {
-    const managerName = resolveManagerName(input.managerId)
-    const now = new Date().toISOString()
-    return resource.create({ ...input, managerName, createdAt: now, updatedAt: now })
+    const location = await api.post<LocationResponse>("/api/users/me/locations", locationPayload(input))
+    return api.post<ServiceStation>("/api/service-stations", stationPayload(input, location.id))
   },
-  update: async (id: number, input: ServiceStationInput) => {
-    const managerName = resolveManagerName(input.managerId)
-    return resource.update(id, { ...input, managerName, updatedAt: new Date().toISOString() })
+  update: async (id: number, input: ServiceStationInput, locationId: number) => {
+    await api.put<LocationResponse>(`/api/users/me/locations/${locationId}`, locationPayload(input))
+    return api.put<ServiceStation>(`/api/service-stations/${id}`, stationPayload(input, locationId))
   },
-  remove: (id: number) => resource.remove(id),
+  remove: (id: number) => api.delete<void>(`/api/service-stations/${id}`),
 }

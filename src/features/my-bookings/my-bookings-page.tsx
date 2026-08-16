@@ -1,7 +1,6 @@
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import { Link } from "react-router"
 
-import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
 import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
@@ -9,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BookingStatusStepper } from "@/features/bookings/booking-status-stepper"
 import type { Booking } from "@/features/bookings/bookings-api"
 import { useBookingsByStation } from "@/features/bookings/use-bookings"
-import { MOCK_MY_STATION_ID } from "@/features/station-inventory/station-inventory-api"
+import { useMyStation } from "@/features/service-stations/use-service-stations"
 import { humanizeEnum } from "@/lib/format"
 
 const columns: ColumnDef<Booking>[] = [
@@ -38,7 +37,8 @@ const columns: ColumnDef<Booking>[] = [
 ]
 
 export function MyBookingsPage() {
-  const { data, isLoading, isError, refetch } = useBookingsByStation(MOCK_MY_STATION_ID)
+  const { data: station } = useMyStation()
+  const { data, isLoading, isError, refetch } = useBookingsByStation(station?.id ?? -1)
 
   const table = useReactTable({
     data: data ?? [],
@@ -53,8 +53,6 @@ export function MyBookingsPage() {
         title="My Bookings"
         description="Bookings for your station — assign mechanics, update status, and manage parts used."
       />
-
-      <MockDataNotice />
 
       <div className="border-border bg-card rounded-md border">
         <Table>
