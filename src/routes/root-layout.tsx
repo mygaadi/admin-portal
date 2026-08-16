@@ -1,16 +1,12 @@
 import { MenuIcon } from "lucide-react"
 import { useState } from "react"
-import { Outlet, useNavigate } from "react-router"
+import { Link, Outlet, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { humanizeEnum } from "@/lib/format"
 import { SidebarNav } from "@/routes/sidebar-nav"
 import { useAuthStore } from "@/stores/auth-store"
-
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN: "Admin",
-  STATION_MANAGER: "Station Manager",
-}
 
 export function RootLayout() {
   const navigate = useNavigate()
@@ -51,9 +47,12 @@ export function RootLayout() {
             <MenuIcon />
             <span className="sr-only">Open navigation</span>
           </Button>
-          <span className="text-muted-foreground truncate font-mono text-sm">
-            {`${user.firstName} ${user.lastName} · ${ROLE_LABEL[user.role]}`}
-          </span>
+          <Link
+            to="/profile"
+            className="text-muted-foreground hover:text-foreground truncate font-mono text-sm transition-colors"
+          >
+            {`${user.firstName} ${user.lastName} · ${humanizeEnum(user.role)}`}
+          </Link>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             Log out
           </Button>

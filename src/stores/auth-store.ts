@@ -7,6 +7,8 @@ export interface AuthUser {
   userId: number
   firstName: string
   lastName: string
+  email: string
+  phoneNumber: string
   role: Role
 }
 
@@ -15,6 +17,7 @@ interface AuthState {
   user: AuthUser | null
   login: (accessToken: string, user: AuthUser) => void
   logout: () => void
+  updateUser: (patch: Partial<Pick<AuthUser, "firstName" | "lastName">>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -24,6 +27,8 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       login: (accessToken, user) => set({ accessToken, user }),
       logout: () => set({ accessToken: null, user: null }),
+      updateUser: (patch) =>
+        set((state) => ({ user: state.user ? { ...state.user, ...patch } : state.user })),
     }),
     { name: "admin-portal-auth" }
   )

@@ -8,6 +8,7 @@ import { CreateStationManagerPage } from "@/features/accounts/create-station-man
 import { DashboardPage } from "@/features/dashboard/dashboard-page"
 import { MyBookingsPage } from "@/features/my-bookings/my-bookings-page"
 import { MyStationPage } from "@/features/my-station/my-station-page"
+import { ProfilePage } from "@/features/profile/profile-page"
 import { ServiceChargesPage } from "@/features/service-charges/service-charges-page"
 import { ServiceStationInventoryPage } from "@/features/service-stations/service-station-inventory-page"
 import { ServiceStationsPage } from "@/features/service-stations/service-stations-page"
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
         element: <RootLayout />,
         children: [
           { path: "/", element: <DashboardPage /> },
+          { path: "/profile", element: <ProfilePage /> },
           // Shared — Admin can edit, Station Manager sees this read-only.
           { path: "/vehicles", element: <VehiclesPage /> },
           { path: "/service-charges", element: <ServiceChargesPage /> },

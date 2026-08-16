@@ -50,11 +50,16 @@ export function LoginPage() {
       }
       return data
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
+      // TODO(api-integration): the login response doesn't include email
+      // (PRD §3.2) — fetch GET /api/users/me after login for the full
+      // profile once that endpoint is wired up for real.
       storeLogin(data.accessToken, {
         userId: data.userId,
         firstName: data.firstName,
         lastName: data.lastName,
+        email: "",
+        phoneNumber: variables.phoneNumber,
         role: data.role,
       })
       navigate("/", { replace: true })
@@ -69,6 +74,8 @@ export function LoginPage() {
       userId: 0,
       firstName: "Mock",
       lastName: role === "ADMIN" ? "Admin" : "Station Manager",
+      email: role === "ADMIN" ? "admin@mygaadi.mock" : "station.manager@mygaadi.mock",
+      phoneNumber: role === "ADMIN" ? "+910000000001" : "+910000000002",
       role,
     })
     navigate("/", { replace: true })
