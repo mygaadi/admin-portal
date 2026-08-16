@@ -19,7 +19,7 @@ import {
   useUpdateBookingStatus,
 } from "@/features/bookings/use-bookings"
 import { useAddBookingPart, useBookingParts, useRemoveBookingPart } from "@/features/bookings/use-booking-parts"
-import { useSpareParts } from "@/features/spare-parts/use-spare-parts"
+import { useStationInventory } from "@/features/station-inventory/use-station-inventory"
 import { formatCurrency, humanizeEnum } from "@/lib/format"
 
 const STATUS_ACTION_LABEL: Record<BookingStatus, string> = {
@@ -168,7 +168,11 @@ export function BookingDetailPage() {
             <CardTitle>Parts used</CardTitle>
           </CardHeader>
           <CardContent>
-            <BookingPartsSection bookingId={booking.id} canEdit={canEditParts} />
+            <BookingPartsSection
+              bookingId={booking.id}
+              stationId={booking.stationId}
+              canEdit={canEditParts}
+            />
           </CardContent>
         </Card>
       </div>
@@ -187,23 +191,29 @@ function DetailField({ label, value }: { label: string; value: string }) {
   )
 }
 
-function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdit: boolean }) {
+interface BookingPartsSectionProps {
+  bookingId: number
+  stationId: number
+  canEdit: boolean
+}
+
+function BookingPartsSection({ bookingId, stationId, canEdit }: BookingPartsSectionProps) {
   const { data: parts, isLoading, isError, refetch } = useBookingParts(bookingId)
-  const { data: spareParts } = useSpareParts()
-  const addMutation = useAddBookingPart(bookingId)
+  const { data: inventory } = useStationInventory(stationId)
+  const addMutation = useAddBookingPart(bookingId, stationId)
   const removeMutation = useRemoveBookingPart(bookingId)
 
-  const [sparePartId, setSparePartId] = useState<number | undefined>(undefined)
+  const [inventoryItemId, setInventoryItemId] = useState<number | undefined>(undefined)
   const [quantity, setQuantity] = useState(1)
 
   function handleAdd() {
-    if (!sparePartId) return
+    if (!inventoryItemId) return
     addMutation.mutate(
-      { sparePartId, quantity },
+      { inventoryItemId, quantity },
       {
         onSuccess: () => {
           toast.success("Part added")
-          setSparePartId(undefined)
+          setInventoryItemId(undefined)
           setQuantity(1)
         },
         onError: () => toast.error("Failed to add part"),
@@ -253,7 +263,7 @@ function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdi
               !isError &&
               parts?.map((part) => (
                 <TableRow key={part.id}>
-                  <TableCell>{part.sparePartName}</TableCell>
+                  <TableCell>{part.partName}</TableCell>
                   <TableCell className="text-muted-foreground font-mono text-xs">
                     {formatCurrency(part.unitPrice)}
                   </TableCell>
@@ -284,16 +294,16 @@ function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdi
           <div className="flex flex-col gap-1.5">
             <Label>Spare part</Label>
             <Select
-              value={sparePartId ?? undefined}
-              onValueChange={(value) => setSparePartId(value as number)}
+              value={inventoryItemId ?? undefined}
+              onValueChange={(value) => setInventoryItemId(value as number)}
             >
               <SelectTrigger className="w-56">
                 <SelectValue placeholder="Select a part" />
               </SelectTrigger>
               <SelectContent>
-                {spareParts?.map((part) => (
-                  <SelectItem key={part.id} value={part.id}>
-                    {part.name}
+                {inventory?.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -309,7 +319,7 @@ function BookingPartsSection({ bookingId, canEdit }: { bookingId: number; canEdi
               className="w-20"
             />
           </div>
-          <Button disabled={!sparePartId || addMutation.isPending} onClick={handleAdd}>
+          <Button disabled={!inventoryItemId || addMutation.isPending} onClick={handleAdd}>
             {addMutation.isPending ? "Adding…" : "Add part"}
           </Button>
         </div>

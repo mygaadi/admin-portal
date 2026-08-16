@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   useCreateVehicleModel,
   useUpdateVehicleModel,
@@ -23,7 +24,8 @@ import {
   vehicleModelSchema,
   type VehicleModelFormValues,
 } from "@/features/vehicle-models/vehicle-model-schema"
-import type { VehicleModel } from "@/features/vehicle-models/vehicle-models-api"
+import { VEHICLE_TYPES, type VehicleModel } from "@/features/vehicle-models/vehicle-models-api"
+import { humanizeEnum } from "@/lib/format"
 
 interface VehicleModelFormDialogProps {
   open: boolean
@@ -43,26 +45,28 @@ export function VehicleModelFormDialog({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<VehicleModelFormValues>({
     resolver: zodResolver(vehicleModelSchema),
-    defaultValues: { name: "", releaseDate: "" },
   })
 
   useEffect(() => {
     if (open) {
       reset({
         name: vehicleModel?.name ?? "",
+        vehicleType: vehicleModel?.vehicleType,
         releaseDate: vehicleModel?.releaseDate ?? "",
-      })
+      } as VehicleModelFormValues)
     }
   }, [open, vehicleModel, reset])
 
   function onSubmit(values: VehicleModelFormValues) {
     const input = {
       name: values.name,
+      vehicleType: values.vehicleType,
       releaseDate: values.releaseDate || null,
     }
 
@@ -96,6 +100,30 @@ export function VehicleModelFormDialog({
             <Label htmlFor="name">Name</Label>
             <Input id="name" {...register("name")} />
             {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="vehicleType">Vehicle type</Label>
+            <Controller
+              control={control}
+              name="vehicleType"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="vehicleType" className="w-full">
+                    <SelectValue placeholder="Select a type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VEHICLE_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {humanizeEnum(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.vehicleType && (
+              <p className="text-destructive text-sm">{errors.vehicleType.message}</p>
+            )}
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="releaseDate">Release date</Label>

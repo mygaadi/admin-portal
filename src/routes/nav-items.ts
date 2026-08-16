@@ -15,14 +15,10 @@ const overviewGroup: NavGroup = {
   items: [{ to: "/", label: "Dashboard" }],
 }
 
-// Shared between roles — Station Manager sees these read-only, Admin can edit.
+// Shared between roles — Station Manager sees this read-only, Admin can edit.
 const catalogGroup: NavGroup = {
   label: "Catalog",
-  items: [
-    { to: "/vehicle-models", label: "Vehicle Models" },
-    { to: "/vehicle-variants", label: "Vehicle Variants" },
-    { to: "/spare-parts", label: "Spare Parts" },
-  ],
+  items: [{ to: "/vehicles", label: "Vehicles" }],
 }
 
 const financeGroup: NavGroup = {

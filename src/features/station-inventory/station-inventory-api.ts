@@ -1,45 +1,51 @@
 import { createMockResource } from "@/lib/mock-resource"
 
 // TODO(api-integration): replace with real calls through `@/lib/api-client`
-// once GET /api/service-stations/{stationId}/inventory and
-// PUT /api/service-stations/{stationId}/inventory/{sparePartId} are
-// confirmed live.
+// once GET/PUT /api/service-stations/{stationId}/inventory are confirmed
+// live.
+//
+// Deviates from the PRD (2026-08-16, product direction): spare parts are no
+// longer a shared Admin-managed catalog (PRD §12) — each station defines its
+// own parts directly in its inventory. `name`/`price` live here per-station
+// instead of being looked up from a shared sparePartId. Flagged in CLAUDE.md.
 
 export interface StationInventoryItem {
   id: number
   stationId: number
-  sparePartId: number
-  sparePartName: string
-  sparePartPrice: number
+  name: string
+  price: number
   quantity: number
   updatedAt: string
+}
+
+export interface StationInventoryItemInput {
+  name: string
+  price: number
+  quantity: number
 }
 
 const resource = createMockResource<StationInventoryItem>([
   {
     id: 1,
     stationId: 1,
-    sparePartId: 1,
-    sparePartName: "Front Brake Pad",
-    sparePartPrice: 2500,
+    name: "Front Brake Pad",
+    price: 2500,
     quantity: 12,
     updatedAt: "2026-03-01T10:00:00Z",
   },
   {
     id: 2,
     stationId: 1,
-    sparePartId: 2,
-    sparePartName: "Air Filter",
-    sparePartPrice: 800,
+    name: "Air Filter",
+    price: 800,
     quantity: 30,
     updatedAt: "2026-03-01T10:00:00Z",
   },
   {
     id: 3,
     stationId: 2,
-    sparePartId: 1,
-    sparePartName: "Front Brake Pad",
-    sparePartPrice: 2500,
+    name: "Front Brake Pad",
+    price: 2650,
     quantity: 5,
     updatedAt: "2026-02-20T10:00:00Z",
   },
@@ -50,6 +56,8 @@ export const stationInventoryApi = {
     const all = await resource.list()
     return all.filter((item) => item.stationId === stationId)
   },
+  create: (stationId: number, input: StationInventoryItemInput) =>
+    resource.create({ ...input, stationId, updatedAt: new Date().toISOString() }),
   updateQuantity: (id: number, quantity: number) =>
     resource.update(id, { quantity, updatedAt: new Date().toISOString() }),
 }

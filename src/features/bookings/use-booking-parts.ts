@@ -11,11 +11,11 @@ export function useBookingParts(bookingId: number) {
   })
 }
 
-export function useAddBookingPart(bookingId: number) {
+export function useAddBookingPart(bookingId: number, stationId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ sparePartId, quantity }: { sparePartId: number; quantity: number }) =>
-      bookingPartsApi.add(bookingId, sparePartId, quantity),
+    mutationFn: ({ inventoryItemId, quantity }: { inventoryItemId: number; quantity: number }) =>
+      bookingPartsApi.add(bookingId, stationId, inventoryItemId, quantity),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: bookingPartsQueryKey(bookingId) }),
   })
 }

@@ -11,9 +11,7 @@ import { MyStationPage } from "@/features/my-station/my-station-page"
 import { ServiceChargesPage } from "@/features/service-charges/service-charges-page"
 import { ServiceStationInventoryPage } from "@/features/service-stations/service-station-inventory-page"
 import { ServiceStationsPage } from "@/features/service-stations/service-stations-page"
-import { SparePartsPage } from "@/features/spare-parts/spare-parts-page"
-import { VehicleModelsPage } from "@/features/vehicle-models/vehicle-models-page"
-import { VehicleVariantsPage } from "@/features/vehicle-variants/vehicle-variants-page"
+import { VehiclesPage } from "@/features/vehicles/vehicles-page"
 import { ProtectedRoute } from "@/routes/protected-route"
 import { RequireRole } from "@/routes/require-role"
 import { RootLayout } from "@/routes/root-layout"
@@ -30,10 +28,8 @@ export const router = createBrowserRouter([
         element: <RootLayout />,
         children: [
           { path: "/", element: <DashboardPage /> },
-          // Shared — Admin can edit, Station Manager sees these read-only.
-          { path: "/vehicle-models", element: <VehicleModelsPage /> },
-          { path: "/vehicle-variants", element: <VehicleVariantsPage /> },
-          { path: "/spare-parts", element: <SparePartsPage /> },
+          // Shared — Admin can edit, Station Manager sees this read-only.
+          { path: "/vehicles", element: <VehiclesPage /> },
           { path: "/service-charges", element: <ServiceChargesPage /> },
           // Shared — Admin or Station Manager can create a Mechanic account.
           { path: "/create-mechanic", element: <CreateMechanicPage /> },

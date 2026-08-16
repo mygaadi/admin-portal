@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useVehicleModels } from "@/features/vehicle-models/use-vehicle-models"
 import {
   useCreateVehicleVariant,
   useUpdateVehicleVariant,
@@ -30,23 +28,23 @@ import type { VehicleVariant } from "@/features/vehicle-variants/vehicle-variant
 interface VehicleVariantFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  modelId: number
   vehicleVariant?: VehicleVariant
 }
 
 export function VehicleVariantFormDialog({
   open,
   onOpenChange,
+  modelId,
   vehicleVariant,
 }: VehicleVariantFormDialogProps) {
   const isEditing = Boolean(vehicleVariant)
-  const { data: vehicleModels } = useVehicleModels()
   const createMutation = useCreateVehicleVariant()
   const updateMutation = useUpdateVehicleVariant()
   const isPending = createMutation.isPending || updateMutation.isPending
 
   const {
     register,
-    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -57,7 +55,6 @@ export function VehicleVariantFormDialog({
   useEffect(() => {
     if (open) {
       reset({
-        modelId: vehicleVariant?.modelId,
         color: vehicleVariant?.color ?? "",
         imageUrl: vehicleVariant?.imageUrl ?? "",
         price: vehicleVariant?.price,
@@ -67,7 +64,7 @@ export function VehicleVariantFormDialog({
 
   function onSubmit(values: VehicleVariantFormValues) {
     const input = {
-      modelId: values.modelId,
+      modelId,
       color: values.color,
       imageUrl: values.imageUrl || null,
       price: values.price,
@@ -94,38 +91,11 @@ export function VehicleVariantFormDialog({
           <DialogTitle>{isEditing ? "Edit vehicle variant" : "New vehicle variant"}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the variant's model, color, image, or price."
-              : "Add a new color/price variant for a vehicle model."}
+              ? "Update the variant's color, image, or price."
+              : "Add a new color/price variant for this model."}
           </DialogDescription>
         </DialogHeader>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="modelId">Vehicle model</Label>
-            <Controller
-              control={control}
-              name="modelId"
-              render={({ field }) => (
-                <Select
-                  value={field.value ?? undefined}
-                  onValueChange={(value) => field.onChange(value)}
-                >
-                  <SelectTrigger id="modelId" className="w-full">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vehicleModels?.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.modelId && (
-              <p className="text-destructive text-sm">{errors.modelId.message}</p>
-            )}
-          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="color">Color</Label>
             <Input id="color" {...register("color")} />

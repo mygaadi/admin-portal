@@ -12,8 +12,8 @@ Three separate products cover the PRD's four roles:
 
 ### Role-gated module breakdown
 
-- **Admin**: full CRUD on Vehicle Models/Variants/Spare Parts, full CRUD on Service Stations (all stations), cross-station Bookings (view any station's bookings, assign mechanic, update status), edit Service Charges.
-- **Station Manager**: Vehicle Models/Variants/Spare Parts and Service Charges are **read-only**; "My Station" (view + edit inventory for their one assigned station, not full station CRUD) and "My Bookings" (their station's bookings only) replace Admin's Service Stations/Bookings screens.
+- **Admin**: full CRUD on Vehicles (models + variants, one combined page), full CRUD on Service Stations (all stations), cross-station Bookings (view any station's bookings, assign mechanic, update status), edit Service Charges.
+- **Station Manager**: Vehicles and Service Charges are **read-only**; "My Station" (view + edit inventory *and* add new spare parts for their one assigned station, not full station CRUD) and "My Bookings" (their station's bookings only) replace Admin's Service Stations/Bookings screens. Spare parts themselves are station-owned, not a shared catalog — see the product-direction deviation below.
 - Implemented as: `getNavGroups(role)` in `src/routes/nav-items.ts` (per-role sidebar), `RequireRole` (`src/routes/require-role.tsx`) guarding Admin-only (`/service-stations`, `/bookings`, `/create-station-manager`) and Station-Manager-only (`/my-station`, `/my-bookings`) routes, and `useIsAdmin()` (`src/stores/auth-store.ts`) gating edit affordances on screens shared between both roles (Catalog, Finance).
 
 ## Tech stack
@@ -56,6 +56,14 @@ Verified against the live backend while building customer-app, not assumptions:
 - **The server returns a generic `500` for an unmatched route instead of a `404`.** When something 500s unexpectedly, double-check the exact path against a working sibling endpoint before assuming it's a real server bug.
 
 **General lesson**: the PRD is Draft status with real gaps between what it documents and what the backend actually does. Verify each new endpoint live (curl it) before wiring a screen up to it — don't trust the PRD's literal path/shape without a live check.
+
+## Product-direction deviations from the PRD (2026-08-16)
+
+Deliberate scope changes from the user, not backend discrepancies — the PRD still describes the old model in these three places:
+
+- **Spare parts are station-owned, not a shared Admin catalog.** PRD §12 models a global spare-parts catalog Admin manages, referenced by `sparePartId` from both station inventory and booking parts. Removed entirely — each station now defines its own parts (`name`/`price`) directly inside its Station Inventory (`src/features/station-inventory/`), and a booking's "add part" picker sources from that booking's own station's inventory (`src/features/bookings/booking-parts-api.ts`), not a shared list.
+- **`vehicleType` field** added to Vehicle Model (`CAR`/`BIKE`/`SCOOTER`/`TRUCK`/`BUS` — not a PRD-documented field at all; adjust the value list freely, it's not tied to anything else).
+- **Vehicle Models and Variants are one combined page** (`/vehicles`, `src/features/vehicles/vehicles-page.tsx`) instead of two separate routes — models are listed as cards, each with its variants managed inline. `VehicleVariantFormDialog` no longer has a model picker; `modelId` is passed in from context.
 
 ## Open questions (need backend dev / product owner input)
 
