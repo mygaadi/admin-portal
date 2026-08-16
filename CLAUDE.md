@@ -40,7 +40,7 @@ Grounded in the actual subject (vehicle service/workshop operations), not generi
 |---|---|---|
 | Auth/Login | **Real**, always was | `src/features/auth/auth-api.ts` never used the mock layer |
 | Vehicle Models/Variants | **Real** (2026-08-16) | `vehicleType` field name matches exactly; real enum values are `TWO_WHEELER/THREE_WHEELER/FOUR_WHEELER/COMMERCIAL_VEHICLE/HEAVY_VEHICLE` |
-| Profile | Mock | Real endpoints exist (`/api/users/me/*` for Station Manager, `/api/admin/me/*` for Admin) — not yet wired |
+| Profile | **Real** (2026-08-16) | Role-conditional routing: Admin → `/api/admin/me/profile`, others → `/api/users/me/profile`. Password change and email/phone change endpoints exist server-side but aren't in the current UI scope — not added |
 | Accounts | Mock | Real endpoints now exist for all 3 roles (see Open Questions #1) — not yet wired |
 | Service Stations | Mock | Real CRUD is Admin-only and confirmed; needs a location-creation flow first (see below) |
 | Bookings (Service Requests) | **Real** (2026-08-16), parts sub-panel still mock | Core flow (list/detail/assign-mechanic/status) wired to `/api/service-requests`; real `Status` enum uses `PENDING` not `REQUESTED` — renamed throughout. Mechanic picker still sources from a hardcoded list (no endpoint lists mechanics eligible for a station — same gap as Open Question #2). "Parts used" stays mocked: real `AddPartRequest` references a global `sparePartId`, conflicting with our station-inventory model — blocked on the same Spare Parts rework |
