@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import { Link } from "react-router"
 
-import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
 import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
@@ -80,8 +79,6 @@ export function BookingsPage() {
           </Select>
         }
       />
-
-      <MockDataNotice />
 
       <div className="border-border bg-card rounded-md border">
         <Table>

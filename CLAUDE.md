@@ -43,7 +43,7 @@ Grounded in the actual subject (vehicle service/workshop operations), not generi
 | Profile | Mock | Real endpoints exist (`/api/users/me/*` for Station Manager, `/api/admin/me/*` for Admin) — not yet wired |
 | Accounts | Mock | Real endpoints now exist for all 3 roles (see Open Questions #1) — not yet wired |
 | Service Stations | Mock | Real CRUD is Admin-only and confirmed; needs a location-creation flow first (see below) |
-| Bookings (Service Requests) | Mock | Real endpoints confirmed matching, core flow (list/detail/assign/status) integrable; the "parts used" sub-panel is coupled to the still-blocked Spare Parts rework |
+| Bookings (Service Requests) | **Real** (2026-08-16), parts sub-panel still mock | Core flow (list/detail/assign-mechanic/status) wired to `/api/service-requests`; real `Status` enum uses `PENDING` not `REQUESTED` — renamed throughout. Mechanic picker still sources from a hardcoded list (no endpoint lists mechanics eligible for a station — same gap as Open Question #2). "Parts used" stays mocked: real `AddPartRequest` references a global `sparePartId`, conflicting with our station-inventory model — blocked on the same Spare Parts rework |
 | Service Charges | Mock | Real API changed shape significantly (station + vehicleType together) — see Product-direction deviations |
 | Spare Parts / Station Inventory | Mock, blocked | Real backend still has a global Admin-managed catalog, not station-owned — waiting on the backend dev |
 

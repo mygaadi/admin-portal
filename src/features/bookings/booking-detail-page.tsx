@@ -23,7 +23,7 @@ import { useStationInventory } from "@/features/station-inventory/use-station-in
 import { formatCurrency, humanizeEnum } from "@/lib/format"
 
 const STATUS_ACTION_LABEL: Record<BookingStatus, string> = {
-  REQUESTED: "Mark Requested",
+  PENDING: "Mark Pending",
   ASSIGNED: "Mark Assigned",
   IN_PROGRESS: "Start Service",
   COMPLETED: "Complete Service",
@@ -31,7 +31,7 @@ const STATUS_ACTION_LABEL: Record<BookingStatus, string> = {
 }
 
 const PARTS_EDITABLE_STATUSES: BookingStatus[] = ["ASSIGNED", "IN_PROGRESS"]
-const MECHANIC_EDITABLE_STATUSES: BookingStatus[] = ["REQUESTED", "ASSIGNED", "IN_PROGRESS"]
+const MECHANIC_EDITABLE_STATUSES: BookingStatus[] = ["PENDING", "ASSIGNED", "IN_PROGRESS"]
 
 export function BookingDetailPage() {
   const { bookingId } = useParams<{ bookingId: string }>()
@@ -80,8 +80,6 @@ export function BookingDetailPage() {
         title={`Booking #${String(booking.id).padStart(3, "0")}`}
         description={`${booking.vehicleName} — ${booking.customerName}`}
       />
-
-      <MockDataNotice />
 
       <div className="flex flex-col gap-6">
         <Card>
@@ -168,6 +166,7 @@ export function BookingDetailPage() {
             <CardTitle>Parts used</CardTitle>
           </CardHeader>
           <CardContent>
+            <MockDataNotice />
             <BookingPartsSection
               bookingId={booking.id}
               stationId={booking.stationId}

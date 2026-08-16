@@ -2,10 +2,10 @@ import type { BookingStatus } from "@/features/bookings/bookings-api"
 import { humanizeEnum } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-const STEPS: BookingStatus[] = ["REQUESTED", "ASSIGNED", "IN_PROGRESS", "COMPLETED"]
+const STEPS: BookingStatus[] = ["PENDING", "ASSIGNED", "IN_PROGRESS", "COMPLETED"]
 
 const STEP_COLOR: Record<BookingStatus, string> = {
-  REQUESTED: "bg-status-requested",
+  PENDING: "bg-status-pending",
   ASSIGNED: "bg-status-assigned",
   IN_PROGRESS: "bg-status-in-progress",
   COMPLETED: "bg-status-completed",
@@ -13,7 +13,7 @@ const STEP_COLOR: Record<BookingStatus, string> = {
 }
 
 const STEP_RING: Record<BookingStatus, string> = {
-  REQUESTED: "ring-status-requested/30",
+  PENDING: "ring-status-pending/30",
   ASSIGNED: "ring-status-assigned/30",
   IN_PROGRESS: "ring-status-in-progress/30",
   COMPLETED: "ring-status-completed/30",
