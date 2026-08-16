@@ -2,8 +2,11 @@ import { z } from "zod"
 
 export const serviceStationSchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name must not exceed 200 characters"),
-  locationId: z.number({ message: "Location ID is required" }).int().positive(),
-  managerId: z.number({ message: "Manager ID is required" }).int().positive(),
+  managerId: z.number({ message: "Select a station manager" }).int().positive(),
+  addressLine: z.string().min(1, "Search and select a location"),
+  city: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
   phone: z.string().max(20, "Phone must not exceed 20 characters"),
   email: z
     .string()

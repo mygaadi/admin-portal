@@ -3,17 +3,19 @@ import { createMockResource } from "@/lib/mock-resource"
 // TODO(api-integration): replace with real calls through `@/lib/api-client`
 // once GET/POST/PUT/DELETE /api/service-stations are confirmed live.
 //
-// locationId and managerId have no documented listing endpoint (CLAUDE.md
-// open question #2) — real Admin users would hit the same problem picking
-// valid IDs. The lookups below are mock-only stand-ins for what a real
-// location/user-search endpoint would resolve server-side.
+// managerId has no documented listing endpoint (CLAUDE.md open question #2)
+// — MOCK_MANAGERS below stands in for what a real user-search-by-role
+// endpoint would return. Location is no longer a locationId reference (see
+// CLAUDE.md product-direction deviations) — addressLine/city/lat/lng are
+// captured directly via the location picker and stored inline.
 
 export interface ServiceStation {
   id: number
   name: string
-  locationId: number
-  city: string
   addressLine: string
+  city: string
+  latitude: number
+  longitude: number
   managerId: number
   managerName: string
   phone: string | null
@@ -25,48 +27,43 @@ export interface ServiceStation {
 
 export interface ServiceStationInput {
   name: string
-  locationId: number
+  addressLine: string
+  city: string
+  latitude: number
+  longitude: number
   managerId: number
   phone: string | null
   email: string | null
   capacity: number
 }
 
-export const MOCK_LOCATIONS: Record<number, { city: string; addressLine: string }> = {
-  101: { city: "Bangalore", addressLine: "123, Main Road, Indiranagar" },
-  102: { city: "Mumbai", addressLine: "45, Andheri West, Near Metro Station" },
-  103: { city: "Pune", addressLine: "12, FC Road" },
+export interface Manager {
+  id: number
+  name: string
 }
 
-export const MOCK_MANAGERS: Record<number, string> = {
-  501: "John Doe",
-  502: "Jane Doe",
-  503: "Amit Shah",
-}
-
-function resolveLocation(locationId: number) {
-  const location = MOCK_LOCATIONS[locationId]
-  if (!location) {
-    throw new Error(`Location ${locationId} not found`)
-  }
-  return location
-}
+export const MOCK_MANAGERS: Manager[] = [
+  { id: 501, name: "John Doe" },
+  { id: 502, name: "Jane Doe" },
+  { id: 503, name: "Amit Shah" },
+]
 
 function resolveManagerName(managerId: number) {
-  const managerName = MOCK_MANAGERS[managerId]
-  if (!managerName) {
+  const manager = MOCK_MANAGERS.find((m) => m.id === managerId)
+  if (!manager) {
     throw new Error(`Manager ${managerId} not found`)
   }
-  return managerName
+  return manager.name
 }
 
 const resource = createMockResource<ServiceStation>([
   {
     id: 1,
     name: "ABC Motors Service Center",
-    locationId: 101,
+    addressLine: "123, Main Road, Indiranagar, Bangalore, Karnataka, India",
     city: "Bangalore",
-    addressLine: "123, Main Road, Indiranagar",
+    latitude: 12.9716,
+    longitude: 77.6412,
     managerId: 501,
     managerName: "John Doe",
     phone: "+919876543210",
@@ -78,9 +75,10 @@ const resource = createMockResource<ServiceStation>([
   {
     id: 2,
     name: "Metro Car Care",
-    locationId: 102,
+    addressLine: "45, Andheri West, Near Metro Station, Mumbai, Maharashtra, India",
     city: "Mumbai",
-    addressLine: "45, Andheri West, Near Metro Station",
+    latitude: 19.1197,
+    longitude: 72.8468,
     managerId: 502,
     managerName: "Jane Doe",
     phone: "+919812345678",
@@ -94,20 +92,13 @@ const resource = createMockResource<ServiceStation>([
 export const serviceStationsApi = {
   list: () => resource.list(),
   create: async (input: ServiceStationInput) => {
-    const location = resolveLocation(input.locationId)
     const managerName = resolveManagerName(input.managerId)
     const now = new Date().toISOString()
-    return resource.create({ ...input, ...location, managerName, createdAt: now, updatedAt: now })
+    return resource.create({ ...input, managerName, createdAt: now, updatedAt: now })
   },
   update: async (id: number, input: ServiceStationInput) => {
-    const location = resolveLocation(input.locationId)
     const managerName = resolveManagerName(input.managerId)
-    return resource.update(id, {
-      ...input,
-      ...location,
-      managerName,
-      updatedAt: new Date().toISOString(),
-    })
+    return resource.update(id, { ...input, managerName, updatedAt: new Date().toISOString() })
   },
   remove: (id: number) => resource.remove(id),
 }

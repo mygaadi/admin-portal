@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
+import { LocationPicker, type LocationValue } from "@/components/location-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,11 +16,12 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   serviceStationSchema,
   type ServiceStationFormValues,
 } from "@/features/service-stations/service-station-schema"
-import type { ServiceStation } from "@/features/service-stations/service-stations-api"
+import { MOCK_MANAGERS, type ServiceStation } from "@/features/service-stations/service-stations-api"
 import {
   useCreateServiceStation,
   useUpdateServiceStation,
@@ -43,8 +45,11 @@ export function ServiceStationFormDialog({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ServiceStationFormValues>({
     resolver: zodResolver(serviceStationSchema),
@@ -54,8 +59,11 @@ export function ServiceStationFormDialog({
     if (open) {
       reset({
         name: serviceStation?.name ?? "",
-        locationId: serviceStation?.locationId,
         managerId: serviceStation?.managerId,
+        addressLine: serviceStation?.addressLine ?? "",
+        city: serviceStation?.city ?? "",
+        latitude: serviceStation?.latitude,
+        longitude: serviceStation?.longitude,
         phone: serviceStation?.phone ?? "",
         email: serviceStation?.email ?? "",
         capacity: serviceStation?.capacity,
@@ -63,11 +71,29 @@ export function ServiceStationFormDialog({
     }
   }, [open, serviceStation, reset])
 
+  const addressLine = watch("addressLine")
+  const city = watch("city")
+  const latitude = watch("latitude")
+  const longitude = watch("longitude")
+  const locationValue: LocationValue | null = addressLine
+    ? { addressLine, city, latitude, longitude }
+    : null
+
+  function handleLocationChange(location: LocationValue) {
+    setValue("addressLine", location.addressLine, { shouldValidate: true })
+    setValue("city", location.city)
+    setValue("latitude", location.latitude)
+    setValue("longitude", location.longitude)
+  }
+
   function onSubmit(values: ServiceStationFormValues) {
     const input = {
       name: values.name,
-      locationId: values.locationId,
       managerId: values.managerId,
+      addressLine: values.addressLine,
+      city: values.city,
+      latitude: values.latitude,
+      longitude: values.longitude,
       phone: values.phone || null,
       email: values.email || null,
       capacity: values.capacity,
@@ -83,7 +109,7 @@ export function ServiceStationFormDialog({
         onOpenChange(false)
       })
       .catch(() => {
-        toast.error("Something went wrong. Check the location/manager IDs and try again.")
+        toast.error("Something went wrong. Please try again.")
       })
   }
 
@@ -104,34 +130,37 @@ export function ServiceStationFormDialog({
             <Input id="name" {...register("name")} />
             {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="locationId">Location ID</Label>
-              <Input
-                id="locationId"
-                type="number"
-                {...register("locationId", { valueAsNumber: true })}
-              />
-              {errors.locationId && (
-                <p className="text-destructive text-sm">{errors.locationId.message}</p>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="managerId">Station manager</Label>
+            <Controller
+              control={control}
+              name="managerId"
+              render={({ field }) => (
+                <Select value={field.value ?? undefined} onValueChange={field.onChange}>
+                  <SelectTrigger id="managerId" className="w-full">
+                    <SelectValue placeholder="Select a manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MOCK_MANAGERS.map((manager) => (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        {manager.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="managerId">Manager ID</Label>
-              <Input
-                id="managerId"
-                type="number"
-                {...register("managerId", { valueAsNumber: true })}
-              />
-              {errors.managerId && (
-                <p className="text-destructive text-sm">{errors.managerId.message}</p>
-              )}
-            </div>
+            />
+            {errors.managerId && (
+              <p className="text-destructive text-sm">{errors.managerId.message}</p>
+            )}
           </div>
-          <p className="text-muted-foreground -mt-2 text-xs">
-            No lookup exists yet for valid location/manager IDs (see CLAUDE.md). Mock IDs:
-            locations 101–103, managers 501–503.
-          </p>
+          <div className="flex flex-col gap-2">
+            <Label>Location</Label>
+            <LocationPicker value={locationValue} onChange={handleLocationChange} />
+            {errors.addressLine && (
+              <p className="text-destructive text-sm">{errors.addressLine.message}</p>
+            )}
+          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="phone">Phone</Label>
             <Input id="phone" type="tel" {...register("phone")} />
