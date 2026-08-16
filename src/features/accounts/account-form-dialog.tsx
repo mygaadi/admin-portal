@@ -46,6 +46,7 @@ export function AccountFormDialog({ open, onOpenChange, availableRoles }: Accoun
         role: availableRoles.length === 1 ? availableRoles[0] : undefined,
         firstName: "",
         lastName: "",
+        email: "",
         phoneNumber: "",
         password: "",
       } as AccountFormValues)
@@ -58,7 +59,9 @@ export function AccountFormDialog({ open, onOpenChange, availableRoles }: Accoun
         role: values.role,
         firstName: values.firstName,
         lastName: values.lastName,
+        email: values.email,
         phoneNumber: values.phoneNumber,
+        password: values.password,
       },
       {
         onSuccess: () => {
@@ -113,6 +116,11 @@ export function AccountFormDialog({ open, onOpenChange, availableRoles }: Accoun
             {errors.lastName && (
               <p className="text-destructive text-sm">{errors.lastName.message}</p>
             )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" {...register("email")} />
+            {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="phoneNumber">Phone number</Label>

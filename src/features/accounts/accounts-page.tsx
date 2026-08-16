@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
 
-import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
 import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
@@ -60,7 +59,10 @@ export function AccountsPage() {
         action={<Button onClick={() => setFormOpen(true)}>New user</Button>}
       />
 
-      <MockDataNotice />
+      <p className="border-border bg-muted/50 text-muted-foreground mb-4 rounded-md border px-3 py-2 text-sm">
+        Accounts created here are real. There's no backend endpoint yet to list existing accounts,
+        so this table only shows what's been created this session.
+      </p>
 
       <div className="border-border bg-card rounded-md border">
         <Table>
