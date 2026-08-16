@@ -1,8 +1,17 @@
-import { MenuIcon } from "lucide-react"
+import { LogOutIcon, MenuIcon, UserIcon } from "lucide-react"
 import { useState } from "react"
 import { Link, Outlet, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { humanizeEnum } from "@/lib/format"
 import { SidebarNav } from "@/routes/sidebar-nav"
@@ -37,7 +46,7 @@ export function RootLayout() {
       </Sheet>
 
       <div className="flex flex-col">
-        <header className="border-border flex items-center justify-between gap-2 border-b px-4 py-3 md:px-6">
+        <header className="border-border flex items-center gap-2 border-b px-4 py-3 md:px-6">
           <Button
             variant="outline"
             size="icon-sm"
@@ -47,15 +56,31 @@ export function RootLayout() {
             <MenuIcon />
             <span className="sr-only">Open navigation</span>
           </Button>
-          <Link
-            to="/profile"
-            className="text-muted-foreground hover:text-foreground truncate font-mono text-sm transition-colors"
-          >
-            {`${user.firstName} ${user.lastName} · ${humanizeEnum(user.role)}`}
-          </Link>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            Log out
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<Button variant="outline" size="icon-sm" className="ml-auto" />}
+            >
+              <UserIcon />
+              <span className="sr-only">Account menu</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  <p className="text-foreground text-sm font-medium">
+                    {`${user.firstName} ${user.lastName}`}
+                  </p>
+                  <p>{humanizeEnum(user.role)}</p>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link to="/profile" />}>Profile</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                <LogOutIcon />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
         <main className="flex-1 p-4 md:p-6">
           <Outlet />
