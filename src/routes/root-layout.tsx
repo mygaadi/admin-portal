@@ -1,4 +1,4 @@
-import { LogOutIcon, MenuIcon, UserIcon } from "lucide-react"
+import { LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SunIcon, UserIcon } from "lucide-react"
 import { useState } from "react"
 import { Link, Outlet, useNavigate } from "react-router"
 
@@ -9,10 +9,13 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { useTheme } from "@/components/theme-provider"
 import { humanizeEnum } from "@/lib/format"
 import { SidebarNav } from "@/routes/sidebar-nav"
 import { useAuthStore } from "@/stores/auth-store"
@@ -21,6 +24,7 @@ export function RootLayout() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const { theme, setTheme } = useTheme()
   const [navOpen, setNavOpen] = useState(false)
 
   function handleLogout() {
@@ -74,6 +78,22 @@ export function RootLayout() {
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem render={<Link to="/profile" />}>Profile</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as typeof theme)}>
+                <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                <DropdownMenuRadioItem value="light">
+                  <SunIcon />
+                  Light
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark">
+                  <MoonIcon />
+                  Dark
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="system">
+                  <MonitorIcon />
+                  System
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                 <LogOutIcon />
