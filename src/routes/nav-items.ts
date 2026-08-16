@@ -42,36 +42,24 @@ const stationManagerOperationsGroup: NavGroup = {
   ],
 }
 
-const adminAccountsGroup: NavGroup = {
+// Shared between roles — the dialog inside just offers fewer role options
+// for Station Manager (see AccountsPage).
+const accountsGroup: NavGroup = {
   label: "Accounts",
-  items: [
-    { to: "/create-station-manager", label: "Create Station Manager" },
-    { to: "/create-mechanic", label: "Create Mechanic" },
-  ],
-}
-
-const stationManagerAccountsGroup: NavGroup = {
-  label: "Accounts",
-  items: [{ to: "/create-mechanic", label: "Create Mechanic" }],
+  items: [{ to: "/accounts", label: "Accounts" }],
 }
 
 export function getNavGroups(role: Role): NavGroup[] {
   switch (role) {
     case "ADMIN":
-      return [
-        overviewGroup,
-        catalogGroup,
-        adminOperationsGroup,
-        financeGroup,
-        adminAccountsGroup,
-      ]
+      return [overviewGroup, catalogGroup, adminOperationsGroup, financeGroup, accountsGroup]
     case "STATION_MANAGER":
       return [
         overviewGroup,
         stationManagerOperationsGroup,
         catalogGroup,
         financeGroup,
-        stationManagerAccountsGroup,
+        accountsGroup,
       ]
     default:
       return [overviewGroup]

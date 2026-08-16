@@ -1,10 +1,9 @@
 import { createBrowserRouter } from "react-router"
 
 import { LoginPage } from "@/features/auth/login-page"
+import { AccountsPage } from "@/features/accounts/accounts-page"
 import { BookingDetailPage } from "@/features/bookings/booking-detail-page"
 import { BookingsPage } from "@/features/bookings/bookings-page"
-import { CreateMechanicPage } from "@/features/accounts/create-mechanic-page"
-import { CreateStationManagerPage } from "@/features/accounts/create-station-manager-page"
 import { DashboardPage } from "@/features/dashboard/dashboard-page"
 import { MyBookingsPage } from "@/features/my-bookings/my-bookings-page"
 import { MyStationPage } from "@/features/my-station/my-station-page"
@@ -33,8 +32,8 @@ export const router = createBrowserRouter([
           // Shared — Admin can edit, Station Manager sees this read-only.
           { path: "/vehicles", element: <VehiclesPage /> },
           { path: "/service-charges", element: <ServiceChargesPage /> },
-          // Shared — Admin or Station Manager can create a Mechanic account.
-          { path: "/create-mechanic", element: <CreateMechanicPage /> },
+          // Shared — the dialog offers fewer role options for Station Manager.
+          { path: "/accounts", element: <AccountsPage /> },
           // Admin-only — cross-station.
           {
             element: <RequireRole role="ADMIN" />,
@@ -46,7 +45,6 @@ export const router = createBrowserRouter([
               },
               { path: "/bookings", element: <BookingsPage /> },
               { path: "/bookings/:bookingId", element: <BookingDetailPage /> },
-              { path: "/create-station-manager", element: <CreateStationManagerPage /> },
             ],
           },
           // Station Manager-only — scoped to their own station.
