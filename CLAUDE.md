@@ -30,25 +30,41 @@ Grounded in the actual subject (vehicle service/workshop operations), not generi
 - **Signature element**: `BookingStatusStepper` (`src/features/bookings/booking-status-stepper.tsx`) — a stamped job-ticket style stepper for booking status, since REQUESTED→ASSIGNED→IN_PROGRESS→COMPLETED is a real sequence.
 - Mobile: sidebar collapses to a Sheet-based drawer below `md`; shared `SidebarNav` component used by both. Tables scroll horizontally in their own container rather than reflowing (shadcn default).
 
-## Current build status: mock data, not yet wired to the real API
+## Current build status: real backend integration in progress
 
-Every feature (`src/features/*`) is fully built and working against an **in-memory mock API layer** (`createMockResource()` in `src/lib/mock-resource.ts`), not the real backend — there's no test login yet (see open questions). Each feature's `*-api.ts` file has a `TODO(api-integration)` comment marking where to swap in real calls through `src/lib/api-client.ts`. The mock/real swap should only require editing that one file per feature — page components, hooks, and forms call the API module by name and shouldn't need to change.
+**As of 2026-08-16, the real backend source is available locally** at `C:\Users\sieme\VSCodeProjects\mygaadi\backend\backend-service` (Spring Boot 3.5 + MySQL + Liquibase, repo `mygaadi/backend-service`). This changes everything below from "verify by curling a stranger's API" to "read the actual controller/entity source before integrating" — always prefer checking the source over guessing when wiring up a new screen.
 
-`src/features/my-station/*` and the account-creation pages additionally stand in with fixed mock IDs / no-op forms because the underlying endpoints are unconfirmed or undocumented (see open questions).
+**Per-feature status:**
+
+| Feature | Status | Notes |
+|---|---|---|
+| Auth/Login | **Real**, always was | `src/features/auth/auth-api.ts` never used the mock layer |
+| Vehicle Models/Variants | **Real** (2026-08-16) | `vehicleType` field name matches exactly; real enum values are `TWO_WHEELER/THREE_WHEELER/FOUR_WHEELER/COMMERCIAL_VEHICLE/HEAVY_VEHICLE` |
+| Profile | Mock | Real endpoints exist (`/api/users/me/*` for Station Manager, `/api/admin/me/*` for Admin) — not yet wired |
+| Accounts | Mock | Real endpoints now exist for all 3 roles (see Open Questions #1) — not yet wired |
+| Service Stations | Mock | Real CRUD is Admin-only and confirmed; needs a location-creation flow first (see below) |
+| Bookings (Service Requests) | Mock | Real endpoints confirmed matching, core flow (list/detail/assign/status) integrable; the "parts used" sub-panel is coupled to the still-blocked Spare Parts rework |
+| Service Charges | Mock | Real API changed shape significantly (station + vehicleType together) — see Product-direction deviations |
+| Spare Parts / Station Inventory | Mock, blocked | Real backend still has a global Admin-managed catalog, not station-owned — waiting on the backend dev |
+
+Remaining mock features still use the **in-memory mock API layer** (`createMockResource()` in `src/lib/mock-resource.ts`), each with a `TODO(api-integration)` comment in its `*-api.ts` file marking where to swap in real calls through `src/lib/api-client.ts` — the swap should only require editing that one file per feature.
 
 ## Backend access
 
-- Base URL is a Cloudflare tunnel, ephemeral (`trycloudflare.com` — expect it to change whenever the backend dev restarts it): as of 2026-08-15, `https://downloading-bible-shoot-gulf.trycloudflare.com` (see `.env` / `.env.example`, `VITE_API_BASE_URL`). Health check: `GET /api/public/health`.
-- Auth: single `accessToken`, no refresh token, per the PRD. `Authorization: Bearer <token>` header. A 401 means the session is dead — `src/lib/api-client.ts` logs out automatically on 401, no retry/refresh flow exists.
-- Login: `POST /api/auth/login` with `{ phoneNumber, password }` → `{ accessToken, tokenType, userId, firstName, lastName, role }`.
-- Mock login buttons exist on the login page to preview both roles without real credentials. Shown when `import.meta.env.DEV` (always true under `vite dev`) **or** `VITE_ENABLE_MOCK_AUTH=true` is set (for demo/preview deployments — e.g. Vercel — that have no real backend to log into yet). Unset that env var once real login exists; anyone with the deployment URL can otherwise use it to get full Admin/Station Manager access to the mock data.
+- **Local dev backend** (preferred when working on this machine): `http://localhost:8081`, source at `C:\Users\sieme\VSCodeProjects\mygaadi\backend\backend-service`. Run with `JAVA_HOME="C:\Program Files\Java\jdk-17" ./mvnw spring-boot:run` (the global `JAVA_HOME` on this machine points at a nonexistent JRE 8 install — override it per-command, don't rely on the global env var). MySQL database name has changed at least once (`vst_service` → `mygaadi`) — check `application.properties`' `spring.datasource.url` for the current name before assuming. Health check: `GET /api/public/health`.
+- Original ephemeral Cloudflare tunnel (`https://downloading-bible-shoot-gulf.trycloudflare.com`) may still be relevant for non-local testing — expect it to change whenever whoever runs it restarts it.
+- **`application.properties` has real secrets committed to git, already pushed to `origin`** (MySQL root password, a Gmail SMTP app password, JWT secret, a default-admin password) — flagged to the user 2026-08-16, recommended rotating them. Not this repo's problem to fix, just don't make it worse (don't commit your own local DB password over it without checking first).
+- Auth: single `accessToken`, no refresh token. `Authorization: Bearer <token>` header. A 401 means the session is dead — `src/lib/api-client.ts` logs out automatically on 401, no retry/refresh flow exists.
+- Login: `POST /api/auth/login` with `{ phoneNumber, password }` → `{ accessToken, tokenType, userId, firstName, lastName, role }`. One shared endpoint for every role/app (confirmed via `SecurityConfig`: `/api/auth/**` is `permitAll()`) — there's no admin-specific login route, role-based access happens entirely through `@PreAuthorize` on individual endpoints afterward.
+- A real seeded Admin exists in the DB: phone `9488748480` / password `Admin@12345` (id 1, "System Admin") — confirmed working via curl 2026-08-16. Tied to whichever database the backend currently points at; may need re-seeding if the DB is recreated.
+- Mock login buttons exist on the login page to preview both roles without real credentials. Shown when `import.meta.env.DEV` (always true under `vite dev`) **or** `VITE_ENABLE_MOCK_AUTH=true` is set (for demo/preview deployments — e.g. Vercel — that have no real backend to log into yet). Unset that env var once real login exists everywhere; anyone with the deployment URL can otherwise use it to get full Admin/Station Manager access to the mock data.
 
 ## Confirmed PRD vs. real-API discrepancies
 
 Verified against the live backend while building customer-app, not assumptions:
 
 - **`lastName` casing**: PRD writes `lastname` (lowercase) on some endpoints — the real API uses `lastName` (camelCase) consistently everywhere.
-- **Path pluralization**: PRD documents singular `/api/user/me/...` and `/api/service-charge` — the real API uses plural `/api/users/me/...` and `/api/service-charges` throughout. **Likely affects an Admin-only endpoint not yet tested**: PRD §15.2 documents `PUT /api/service-charge/{serviceType}` (singular) — given the confirmed pattern, this almost certainly needs to be `PUT /api/service-charges/{serviceType}`. Verify before wiring up Service Charges.
+- **Path pluralization**: PRD documents singular `/api/user/me/...` — the real API uses plural `/api/users/me/...` throughout. (Service Charges' path moved even further from the PRD's guess — see Product-direction deviations below; it's not a flat `/api/service-charge(s)` at all anymore, it's nested under a station.)
 - **Default location** (`GET /api/users/me/locations/default`): PRD says it returns `null` when none exists; real API returns `204 No Content` with an empty body.
 - **Vehicle response includes an undocumented `modelName` field.**
 - **`PUT /api/users/me/profile` doesn't return a fresh session** like the PRD says (no `accessToken`) — it returns the same plain profile shape as `GET /api/users/me`.
@@ -61,32 +77,37 @@ Verified against the live backend while building customer-app, not assumptions:
 
 Deliberate scope changes from the user, not backend discrepancies — the PRD still describes the old model in these three places:
 
-- **Spare parts are station-owned, not a shared Admin catalog.** PRD §12 models a global spare-parts catalog Admin manages, referenced by `sparePartId` from both station inventory and booking parts. Removed entirely — each station now defines its own parts (`name`/`price`) directly inside its Station Inventory (`src/features/station-inventory/`), and a booking's "add part" picker sources from that booking's own station's inventory (`src/features/bookings/booking-parts-api.ts`), not a shared list.
-- **`vehicleType` field** added to Vehicle Model (`CAR`/`BIKE`/`SCOOTER`/`TRUCK`/`BUS` — not a PRD-documented field at all; adjust the value list freely, it's not tied to anything else).
-- **Vehicle Models and Variants are one combined page** (`/vehicles`, `src/features/vehicles/vehicles-page.tsx`) instead of two separate routes — models are listed as cards, each with its variants managed inline. `VehicleVariantFormDialog` no longer has a model picker; `modelId` is passed in from context.
-- **Accounts is one page with a role-gated role picker**, not a separate route per role. `src/features/accounts/accounts-page.tsx` + `account-form-dialog.tsx` replace the earlier Create Station Manager / Create Mechanic pages — the "New user" dialog's role options depend on the logged-in user (Admin sees Admin/Station Manager/Mechanic, Station Manager sees Mechanic only). Created accounts are session-only mock data (`accounts-api.ts`), shown in a table on the page for feedback since there's no real endpoint to persist to yet.
-- **Service Charges are scoped per-station**, not global. PRD §15 models a flat/global service-charge list (no `stationId`); Admin now picks a station (like Bookings) and Station Manager sees their own station's charges. The likely-wrong singular-path issue flagged below still applies on top of this — the real endpoint shape for per-station charges is unconfirmed either way.
-- **Service Station's `locationId` is gone.** PRD §10 references a location by ID (tied to the user-personal Location entity in §6); instead the form has a real location picker (`src/components/location-picker.tsx`, free OpenStreetMap Nominatim search — no API key, capped at ~1 req/s per their usage policy, fine for this mock/demo phase but swap for a paid provider or self-hosted instance before real production traffic) that writes `addressLine`/`city`/`latitude`/`longitude` directly onto the station. `managerId` is now a dropdown of `MOCK_MANAGERS` instead of a raw ID input.
+- **`vehicleType` field on Vehicle Model** — turned out the backend dev added the exact same field independently (2026-08-16 commit), field name matches, so this is **no longer a deviation** — now real. Enum values were guessed wrong initially; corrected to the real `TWO_WHEELER/THREE_WHEELER/FOUR_WHEELER/COMMERCIAL_VEHICLE/HEAVY_VEHICLE` in `vehicle-models-api.ts`.
+- **Vehicle Models and Variants are one combined page** (`/vehicles`, `src/features/vehicles/vehicles-page.tsx`) instead of two separate routes — models are listed as cards, each with its variants managed inline. `VehicleVariantFormDialog` no longer has a model picker; `modelId` is passed in from context. Still a frontend-only IA choice, but both underlying APIs are real now.
+- **Spare parts are meant to be station-owned, not a shared Admin catalog** — user's explicit direction, backend dev asked to implement it, **not done yet**: the real backend (as of 2026-08-16) still has a global `spare_parts` catalog table referenced by `station_inventory.spare_part_id`, Admin-only CRUD. Frontend (`src/features/station-inventory/`, `src/features/bookings/booking-parts-api.ts`) still simulates the station-owned model against mock data — stays mock until the backend catches up.
+- **Accounts is one page with a role-gated role picker**, not a separate route per role. `src/features/accounts/accounts-page.tsx` + `account-form-dialog.tsx` — the "New user" dialog's role options depend on the logged-in user (Admin sees Admin/Station Manager/Mechanic, Station Manager sees Mechanic only). Real endpoints now exist for all 3 (see Open Questions #1) but this page isn't wired to them yet — still mock, session-only.
+- **Service Charges are meant to be scoped per-station**, not global — user's explicit direction, backend dev asked to implement it. **Done, but bigger than asked**: the real backend (2026-08-16 commit) scopes charges by **station AND vehicleType together** (`/api/service-stations/{stationId}/charges`, keyed by `serviceType`+`vehicleType`), not just station. Frontend still simulates simple per-station (no vehicleType dimension) against mock data — needs a rebuild of this screen's data model before wiring to the real API, not just a data-source swap.
+- **Service Station's `locationId` is unchanged in the real API** (still a raw FK to a separate `location` table, itself tied to the creating user via `/api/users/me/locations` — PRD §10/§6 model, confirmed accurate). The frontend's `location-picker.tsx` (free OpenStreetMap Nominatim search, no API key — capped at ~1 req/s per their usage policy, swap for a paid provider before real production traffic) currently writes `addressLine`/`city`/`latitude`/`longitude` directly onto the mock station instead of creating a real `location` row first. When wiring Service Stations to the real API: call `POST /api/users/me/locations` with the picked address/city/lat/lng (also capture `state` from the Nominatim result — the real `location` table requires it, not currently captured) to get a real `locationId`, then submit the station with that id. `managerId` is still a raw Long with no listing endpoint on the backend (see Open Questions #2) — `MOCK_MANAGERS` stands in for now; once Accounts is wired to the real API, consider sourcing this picker from station managers created in the current session instead.
 
-## Open questions (need backend dev / product owner input)
+## Open questions
 
-1. **How does an Admin/Station Manager/Mechanic account get created?** `POST /api/auth/register` has no `role` field and always creates a `CUSTOMER`. **Partially resolved**: a MindMeister "My Garage" product mind map (not part of the PRD) shows dedicated "Create Station Manager" (Admin-only) and "Create Mechanic" (Station Manager + Admin) features — placeholder screens exist (`src/features/accounts/`) but the real endpoint/shape is still unconfirmed.
-2. **How does Admin find/list "eligible" Station Manager users** to assign when creating a station (§10.2 requires an existing `managerId`)? No listing/search endpoint is documented — the Service Station form currently takes raw location/manager IDs with mock values documented inline.
-3. Whether there's any user-management surface for Admin at all (list customers, list mechanics, deactivate an account) — the PRD's Admin description is vague on this.
-4. **Which station is a Station Manager assigned to?** No `GET /api/service-stations/me` (or equivalent) is documented — only `GET /api/service-stations/me/service-requests` for bookings. "My Station" stands in with a fixed mock station ID (`MOCK_MY_STATION_ID` in `src/features/station-inventory/station-inventory-api.ts`) until this is confirmed.
+1. **~~How does an Admin/Station Manager/Mechanic account get created?~~ Resolved 2026-08-16** — real endpoints now exist, confirmed from source:
+   - Create Admin: `POST /api/admin/auth/register/admin` (`AdminAuthController`)
+   - Create Station Manager: `POST /api/admin/register/station-manager`, Admin-only (`AdminUserController`)
+   - Create Mechanic: `PUT /api/admin/update/mechanic`, Station Manager or Admin (`AdminUserController`) — despite the `PUT`/"update" naming this actually **creates** a new user (calls `authService.register(request, Role.MECHANIC)`, no id involved); same issue on `PUT /api/admin/update/station-manager`. Worth relaying to the backend dev, but functionally usable as-is.
+   - **Bug worth flagging**: `registerAdmin` is guarded by `@PreAuthorize("hasRole('STATION_MANAGER') or hasRole('ADMIN')")` — a Station Manager can create new Admin accounts. Our frontend doesn't expose that option to Station Manager regardless (role picker only offers Mechanic for that role), so this doesn't leak through our UI, but it's a real backend privilege-escalation gap.
+   - Not yet wired up in `src/features/accounts/` — still mock.
+2. **How does Admin find/list "eligible" Station Manager users** to assign when creating a station (§10.2 requires an existing `managerId`)? Still no listing/search endpoint on the backend as of 2026-08-16. `MOCK_MANAGERS` stands in for now.
+3. Whether there's any broader user-management surface for Admin (list customers, deactivate an account) — still unconfirmed either way.
+4. **~~Which station is a Station Manager assigned to?~~ Resolved 2026-08-16** — `GET /api/service-stations?managerId={id}` exists and lets anyone query stations by manager, so a Station Manager can find their own station via their own `userId` from the JWT/login response. `MOCK_MY_STATION_ID` in `src/features/station-inventory/station-inventory-api.ts` should be replaced with this call when Service Stations gets wired to the real API.
 
-### Unresolved conflicts between the mind map and the PRD — do not build against either side yet
+### Mind-map vs. PRD conflicts — resolved, then partially re-opened by a later backend commit
 
-The mind map above confirms most of the PRD's access-control rules but conflicts in three places. Current code follows the **PRD** for all three, unchanged — flagged as open decisions, not resolved:
+As of the first backend read (2026-08-16, commit `dddf46b`), all three were confirmed via `@PreAuthorize` annotations to side with the **PRD**, not the mind map:
 
-1. **Service Charge edit rights** — mind map tags Create/Update/Delete as Station-Manager-only (no Admin tag); PRD §15.2 says the opposite (Admin-only edit, Station Manager read-only). Direct contradiction.
-2. **Update/Delete Station** — mind map grants these to Station Manager too; PRD's section headings say Admin-only.
-3. **Assign Mechanic to a booking** — mind map tags Mechanic as able to self-assign; PRD §13.10 restricts it to Station Manager/Admin. (Doesn't affect this portal directly since Mechanic isn't a login role here.)
+1. Service Charge edit rights — was Admin-only.
+2. Update/Delete Station — Admin-only, confirmed, **still true** as of the latest commit.
+3. Assign Mechanic to a booking — Station Manager/Admin only, Mechanic excluded, confirmed, **still true** as of the latest commit.
 
-Resolve with the backend dev / product owner before changing role restrictions on Service Charges, Service Station update/delete, or assign-mechanic.
+**But then commit `0f063c3` (same day) changed #1**: Service Charge create/update is now `hasRole('ADMIN') or hasRole('STATION_MANAGER')` — i.e. the backend now matches the **mind map's** version, not the PRD's, on this one specific point. Our frontend's Service Charges page still gates editing to Admin-only (`useIsAdmin()`) — worth revisiting once that screen gets wired to the real (now station+vehicleType-scoped) API, whether to open editing to Station Manager too.
 
 ## Setup checklist before real API integration
 
-- [ ] Get a real Admin login **and** a real Station Manager login from the backend dev.
-- [ ] Verify every endpoint live (curl) before wiring a screen up to it, especially the flagged pluralization issue on service-charges.
-- [ ] Confirm the account-creation endpoint (open question #1) and the Station Manager's own-station lookup (open question #4) before building those screens for real.
+- [x] Get a real Admin login — `9488748480` / `Admin@12345`, confirmed working 2026-08-16.
+- [ ] Get a real Station Manager login (create one via `POST /api/admin/register/station-manager` once Accounts is wired up, or ask the backend dev).
+- [ ] Verify every endpoint live (curl or read the source) before wiring a screen up to it — several real shapes have already turned out to differ from what was assumed (Service Charges especially).

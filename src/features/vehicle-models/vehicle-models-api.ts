@@ -1,15 +1,17 @@
-import { createMockResource } from "@/lib/mock-resource"
+import { api } from "@/lib/api-client"
 
-// TODO(api-integration): replace the mock resource below with real calls
-// through `@/lib/api-client` once GET/POST/PUT/DELETE /api/vehicle-models
-// are confirmed against the live backend (see CLAUDE.md). Keep the
-// `vehicleModelsApi` function signatures unchanged so callers don't need
-// to change.
-//
-// `vehicleType` is not documented in the PRD at all — added per product
-// direction (2026-08-16). Flagged as a PRD deviation in CLAUDE.md.
+// Wired to the real backend (confirmed against backend-service source,
+// 2026-08-16): GET/POST/PUT/DELETE /api/vehicle-models. Field names and
+// the `vehicleType` field itself match exactly what VehicleModelRequest/
+// VehicleModelResponse expect.
 
-export const VEHICLE_TYPES = ["CAR", "BIKE", "SCOOTER", "TRUCK", "BUS"] as const
+export const VEHICLE_TYPES = [
+  "TWO_WHEELER",
+  "THREE_WHEELER",
+  "FOUR_WHEELER",
+  "COMMERCIAL_VEHICLE",
+  "HEAVY_VEHICLE",
+] as const
 export type VehicleType = (typeof VEHICLE_TYPES)[number]
 
 export interface VehicleModel {
@@ -26,34 +28,10 @@ export interface VehicleModelInput {
   releaseDate: string | null
 }
 
-const resource = createMockResource<VehicleModel>([
-  {
-    id: 1,
-    name: "Tesla Model Y",
-    vehicleType: "CAR",
-    releaseDate: "2025-01-15",
-    createdAt: "2026-01-10T10:00:00Z",
-  },
-  {
-    id: 2,
-    name: "Tata Nexon",
-    vehicleType: "CAR",
-    releaseDate: "2023-06-10",
-    createdAt: "2026-02-05T10:00:00Z",
-  },
-  {
-    id: 3,
-    name: "Maruti Suzuki Swift",
-    vehicleType: "CAR",
-    releaseDate: "2021-03-01",
-    createdAt: "2026-03-01T10:00:00Z",
-  },
-])
-
 export const vehicleModelsApi = {
-  list: () => resource.list(),
-  create: (input: VehicleModelInput) =>
-    resource.create({ ...input, createdAt: new Date().toISOString() }),
-  update: (id: number, input: VehicleModelInput) => resource.update(id, input),
-  remove: (id: number) => resource.remove(id),
+  list: () => api.get<VehicleModel[]>("/api/vehicle-models"),
+  create: (input: VehicleModelInput) => api.post<VehicleModel>("/api/vehicle-models", input),
+  update: (id: number, input: VehicleModelInput) =>
+    api.put<VehicleModel>(`/api/vehicle-models/${id}`, input),
+  remove: (id: number) => api.delete<void>(`/api/vehicle-models/${id}`),
 }

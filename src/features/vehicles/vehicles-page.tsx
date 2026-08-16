@@ -2,7 +2,6 @@ import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog"
-import { MockDataNotice } from "@/components/mock-data-notice"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -85,8 +84,6 @@ export function VehiclesPage() {
           isAdmin && <Button onClick={() => setModelForm({ mode: "create" })}>New model</Button>
         }
       />
-
-      <MockDataNotice />
 
       <div className="flex flex-col gap-4">
         {modelsLoading || modelsError || !models || models.length === 0 ? (
