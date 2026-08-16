@@ -46,15 +46,8 @@ export function useCreateServiceStation() {
 export function useUpdateServiceStation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      input,
-      locationId,
-    }: {
-      id: number
-      input: ServiceStationInput
-      locationId: number
-    }) => serviceStationsApi.update(id, input, locationId),
+    mutationFn: ({ id, input }: { id: number; input: ServiceStationInput }) =>
+      serviceStationsApi.update(id, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: serviceStationsQueryKey }),
   })
 }

@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input"
 // this at ~1 request/second and expects light/prototype-level traffic —
 // swap for a paid geocoding provider or a self-hosted instance before any
 // real production usage.
+//
+// Only produces coordinates — address/city/state are independent text
+// fields the user fills in themselves (2026-08-16 product direction), not
+// derived from the search result.
 
-export interface LocationValue {
-  addressLine: string
-  city: string
-  state: string
+export interface LocationCoordinates {
   latitude: number
   longitude: number
 }
@@ -23,17 +24,11 @@ interface NominatimResult {
   display_name: string
   lat: string
   lon: string
-  address?: {
-    city?: string
-    town?: string
-    village?: string
-    state?: string
-  }
 }
 
 interface LocationPickerProps {
-  value: LocationValue | null
-  onChange: (value: LocationValue) => void
+  value: LocationCoordinates | null
+  onChange: (value: LocationCoordinates) => void
 }
 
 export function LocationPicker({ value, onChange }: LocationPickerProps) {
@@ -41,6 +36,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
   const [results, setResults] = useState<NominatimResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pickedLabel, setPickedLabel] = useState<string | null>(null)
 
   async function handleSearch() {
     if (query.trim().length < 3) return
@@ -48,7 +44,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
     setError(null)
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`
       )
       if (!response.ok) {
         throw new Error("Search request failed")
@@ -66,18 +62,8 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
   }
 
   function handleSelect(result: NominatimResult) {
-    onChange({
-      addressLine: result.display_name,
-      city:
-        result.address?.city ??
-        result.address?.town ??
-        result.address?.village ??
-        result.address?.state ??
-        "",
-      state: result.address?.state ?? "",
-      latitude: Number(result.lat),
-      longitude: Number(result.lon),
-    })
+    onChange({ latitude: Number(result.lat), longitude: Number(result.lon) })
+    setPickedLabel(result.display_name)
     setResults([])
     setQuery("")
     setError(null)
@@ -89,7 +75,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search for an address…"
+          placeholder="Search for a place to set coordinates…"
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault()
@@ -127,7 +113,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 
       {value && (
         <div className="border-border bg-muted/30 rounded-md border px-3 py-2 text-sm">
-          <p>{value.addressLine}</p>
+          {pickedLabel && <p className="text-muted-foreground truncate text-xs">{pickedLabel}</p>}
           <p className="text-muted-foreground mt-0.5 font-mono text-xs">
             {value.latitude.toFixed(5)}, {value.longitude.toFixed(5)}
           </p>

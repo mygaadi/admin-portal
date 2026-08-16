@@ -3,6 +3,7 @@ import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
+import { LocationPicker, type LocationCoordinates } from "@/components/location-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,6 +23,7 @@ import {
 } from "@/features/service-stations/service-station-schema"
 import {
   MOCK_MANAGERS,
+  serviceStationsApi,
   type ServiceStation,
 } from "@/features/service-stations/service-stations-api"
 import {
@@ -50,6 +52,8 @@ export function ServiceStationFormDialog({
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ServiceStationFormValues>({
     resolver: zodResolver(serviceStationSchema),
@@ -61,30 +65,50 @@ export function ServiceStationFormDialog({
     reset({
       name: serviceStation?.name ?? "",
       managerId: serviceStation?.managerId ?? undefined,
+      addressLine: serviceStation?.addressLine ?? "",
+      city: serviceStation?.city ?? "",
+      state: serviceStation?.state ?? "",
+      latitude: undefined,
+      longitude: undefined,
       phone: serviceStation?.phone ?? "",
       email: serviceStation?.email ?? "",
       capacity: serviceStation?.capacity,
     })
 
-    // TODO(location): used to fetch the station's location (lat/lng) here to prefill
-    // the LocationPicker on edit — disabled along with the picker itself, see below.
-  }, [open, serviceStation, reset])
+    if (serviceStation) {
+      serviceStationsApi.getLocation(serviceStation.locationId).then((location) => {
+        setValue("latitude", location.latitude)
+        setValue("longitude", location.longitude)
+      })
+    }
+  }, [open, serviceStation, reset, setValue])
+
+  const latitude = watch("latitude")
+  const longitude = watch("longitude")
+  const coordinates: LocationCoordinates | null =
+    latitude !== undefined && longitude !== undefined ? { latitude, longitude } : null
+
+  function handleCoordinatesChange(next: LocationCoordinates) {
+    setValue("latitude", next.latitude, { shouldValidate: true })
+    setValue("longitude", next.longitude, { shouldValidate: true })
+  }
 
   function onSubmit(values: ServiceStationFormValues) {
     const input = {
       name: values.name,
       managerId: values.managerId,
+      addressLine: values.addressLine,
+      city: values.city,
+      state: values.state,
+      latitude: values.latitude,
+      longitude: values.longitude,
       phone: values.phone || null,
       email: values.email || null,
       capacity: values.capacity,
     }
 
     const request = isEditing
-      ? updateMutation.mutateAsync({
-          id: serviceStation!.id,
-          input,
-          locationId: serviceStation!.locationId,
-        })
+      ? updateMutation.mutateAsync({ id: serviceStation!.id, input })
       : createMutation.mutateAsync(input)
 
     request
@@ -111,7 +135,7 @@ export function ServiceStationFormDialog({
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" {...register("name")} />
+            <Input id="name" autoComplete="off" {...register("name")} />
             {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
@@ -138,17 +162,42 @@ export function ServiceStationFormDialog({
               <p className="text-destructive text-sm">{errors.managerId.message}</p>
             )}
           </div>
-          {/* TODO(location): location picker temporarily disabled — locationId isn't
-              required by the backend. See service-stations-api.ts / service-station-schema.ts
-              for the rest of what's commented out. */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="addressLine">Address</Label>
+            <Input id="addressLine" autoComplete="off" {...register("addressLine")} />
+            {errors.addressLine && (
+              <p className="text-destructive text-sm">{errors.addressLine.message}</p>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="city">City</Label>
+              <Input id="city" autoComplete="off" {...register("city")} />
+              {errors.city && <p className="text-destructive text-sm">{errors.city.message}</p>}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="state">State</Label>
+              <Input id="state" autoComplete="off" {...register("state")} />
+              {errors.state && <p className="text-destructive text-sm">{errors.state.message}</p>}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>Coordinates</Label>
+            <LocationPicker value={coordinates} onChange={handleCoordinatesChange} />
+            {(errors.latitude || errors.longitude) && (
+              <p className="text-destructive text-sm">
+                {errors.latitude?.message ?? errors.longitude?.message}
+              </p>
+            )}
+          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" type="tel" {...register("phone")} />
+            <Input id="phone" type="tel" autoComplete="off" {...register("phone")} />
             {errors.phone && <p className="text-destructive text-sm">{errors.phone.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} />
+            <Input id="email" type="email" autoComplete="off" {...register("email")} />
             {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
@@ -156,7 +205,7 @@ export function ServiceStationFormDialog({
             <Input
               id="capacity"
               type="number"
-              min={0}
+              min={1}
               {...register("capacity", { valueAsNumber: true })}
             />
             {errors.capacity && (

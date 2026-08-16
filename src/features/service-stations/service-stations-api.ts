@@ -1,11 +1,12 @@
 import { api } from "@/lib/api-client"
 
-// Wired to the real backend (confirmed against backend-service source,
-// 2026-08-16): GET/POST/PUT/DELETE /api/service-stations, plus a
-// location-creation-first step through /api/users/me/locations — the real
-// ServiceStationRequest takes a `locationId`, not inline address fields.
-// LocationController is scoped to the *logged-in user's own* locations, so
-// stations end up owned (location-wise) by whichever Admin created them.
+// Wired to the real backend (confirmed against the live OpenAPI spec,
+// 2026-08-16): GET/POST/PUT/DELETE /api/service-stations. ServiceStationRequest
+// takes addressLine/city/state/latitude/longitude directly — no separate
+// location-creation step required. The response still includes a
+// `locationId` (the backend creates/updates a Location row internally), so
+// GET /api/users/me/locations/{id} is still useful to prefill lat/lng on
+// edit, since ServiceStationResponse itself doesn't expose coordinates.
 //
 // managerId has no documented listing endpoint (CLAUDE.md open question #2)
 // — MOCK_MANAGERS stands in for what a real user-search-by-role endpoint
@@ -27,11 +28,13 @@ export interface ServiceStation {
   updatedAt: string
 }
 
-// TODO(location): addressLine/city/state/latitude/longitude temporarily removed —
-// locationId isn't required by the backend, so the location-creation-first flow below
-// is commented out for now. Re-add these fields to re-enable it.
 export interface ServiceStationInput {
   name: string
+  addressLine: string
+  city: string
+  state: string
+  latitude: number
+  longitude: number
   managerId: number
   phone: string | null
   email: string | null
@@ -58,21 +61,14 @@ interface LocationResponse {
   longitude: number
 }
 
-// function locationPayload(input: ServiceStationInput) {
-//   return {
-//     addressLine: input.addressLine,
-//     city: input.city,
-//     state: input.state,
-//     latitude: input.latitude,
-//     longitude: input.longitude,
-//     isDetected: false,
-//   }
-// }
-
-function stationPayload(input: ServiceStationInput, locationId: number | null) {
+function stationPayload(input: ServiceStationInput) {
   return {
     name: input.name,
-    locationId,
+    addressLine: input.addressLine,
+    city: input.city,
+    state: input.state,
+    latitude: input.latitude,
+    longitude: input.longitude,
     managerId: input.managerId,
     phone: input.phone,
     email: input.email,
@@ -86,15 +82,9 @@ export const serviceStationsApi = {
     api.get<ServiceStation[]>(`/api/service-stations?managerId=${managerId}`),
   getLocation: (locationId: number) =>
     api.get<LocationResponse>(`/api/users/me/locations/${locationId}`),
-  create: async (input: ServiceStationInput) => {
-    // TODO(location): location-creation-first flow disabled — see ServiceStationInput comment.
-    // const location = await api.post<LocationResponse>("/api/users/me/locations", locationPayload(input))
-    // return api.post<ServiceStation>("/api/service-stations", stationPayload(input, location.id))
-    return api.post<ServiceStation>("/api/service-stations", stationPayload(input, null))
-  },
-  update: async (id: number, input: ServiceStationInput, locationId: number | null) => {
-    // await api.put<LocationResponse>(`/api/users/me/locations/${locationId}`, locationPayload(input))
-    return api.put<ServiceStation>(`/api/service-stations/${id}`, stationPayload(input, locationId))
-  },
+  create: (input: ServiceStationInput) =>
+    api.post<ServiceStation>("/api/service-stations", stationPayload(input)),
+  update: (id: number, input: ServiceStationInput) =>
+    api.put<ServiceStation>(`/api/service-stations/${id}`, stationPayload(input)),
   remove: (id: number) => api.delete<void>(`/api/service-stations/${id}`),
 }
