@@ -1,35 +1,20 @@
 import { useState } from "react"
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import { MapPinIcon } from "lucide-react"
 import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog"
 import { PageHeader } from "@/components/page-header"
-import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ServiceStationFormDialog } from "@/features/service-stations/service-station-form-dialog"
 import type { ServiceStation } from "@/features/service-stations/service-stations-api"
 import {
   useDeleteServiceStation,
   useServiceStations,
 } from "@/features/service-stations/use-service-stations"
-import { cn } from "@/lib/utils"
 
 type FormState = { mode: "create" } | { mode: "edit"; serviceStation: ServiceStation } | null
-
-const columns: ColumnDef<ServiceStation>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ getValue }) => `#${String(getValue<number>()).padStart(3, "0")}`,
-    meta: { mono: true },
-  },
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "city", header: "City" },
-  { accessorKey: "managerName", header: "Manager" },
-  { accessorKey: "capacity", header: "Capacity", meta: { mono: true } },
-]
 
 export function ServiceStationsPage() {
   const { data, isLoading, isError, refetch } = useServiceStations()
@@ -37,12 +22,6 @@ export function ServiceStationsPage() {
 
   const [formState, setFormState] = useState<FormState>(null)
   const [pendingDelete, setPendingDelete] = useState<ServiceStation | null>(null)
-
-  const table = useReactTable({
-    data: data ?? [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
 
   function handleDelete() {
     if (!pendingDelete) return
@@ -64,80 +43,80 @@ export function ServiceStationsPage() {
         action={<Button onClick={() => setFormState({ mode: "create" })}>New station</Button>}
       />
 
-      <div className="border-border bg-card rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="font-mono text-[0.6875rem] tracking-wider uppercase"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-                <TableHead className="text-right font-mono text-[0.6875rem] tracking-wider uppercase">
-                  Actions
-                </TableHead>
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            <TableStatusRow
-              colSpan={columns.length + 1}
-              isLoading={isLoading}
-              isError={isError}
-              isEmpty={!isLoading && !isError && table.getRowModel().rows.length === 0}
-              resourceLabel="service stations"
-              emptyMessage="No service stations yet — add one to get started."
-              onRetry={refetch}
-            />
-            {!isLoading &&
-              !isError &&
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        (cell.column.columnDef.meta as { mono?: boolean } | undefined)?.mono &&
-                          "text-muted-foreground font-mono text-xs"
-                      )}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                  <TableCell className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      render={<Link to={`/service-stations/${row.original.id}/inventory`} />}
-                    >
-                      Inventory
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormState({ mode: "edit", serviceStation: row.original })}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setPendingDelete(row.original)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <p className="text-muted-foreground text-sm">Loading…</p>
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-2 py-8 text-center">
+          <p className="text-destructive text-sm">
+            Couldn't load service stations. Check your connection and try again.
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : !data || data.length === 0 ? (
+        <p className="text-muted-foreground py-8 text-center text-sm">
+          No service stations yet — add one to get started.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.map((station) => (
+            <Card key={station.id}>
+              <CardHeader>
+                <p className="text-muted-foreground font-mono text-[0.6875rem] tracking-wider uppercase">
+                  #{String(station.id).padStart(3, "0")}
+                </p>
+                <CardTitle className="mt-1 text-base">{station.name}</CardTitle>
+                <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
+                  <MapPinIcon className="size-3.5 shrink-0" />
+                  <span className="truncate">
+                    {station.city && station.state ? `${station.city}, ${station.state}` : "No location set"}
+                  </span>
+                </p>
+              </CardHeader>
+              <CardContent className="flex items-end justify-between">
+                <div>
+                  <p className="text-muted-foreground font-mono text-[0.6875rem] tracking-wide uppercase">
+                    Manager
+                  </p>
+                  <p className="text-sm">{station.managerName ?? "Unassigned"}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-2xl leading-none font-semibold">
+                    {station.capacity}
+                  </p>
+                  <p className="text-muted-foreground mt-1 font-mono text-[0.6875rem] tracking-wide uppercase">
+                    Bays
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter className="flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  render={<Link to={`/service-stations/${station.id}/inventory`} />}
+                >
+                  Inventory
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormState({ mode: "edit", serviceStation: station })}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setPendingDelete(station)}
+                >
+                  Delete
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <ServiceStationFormDialog
         open={formState !== null}

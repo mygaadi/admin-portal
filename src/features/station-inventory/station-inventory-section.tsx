@@ -2,11 +2,9 @@ import { useState } from "react"
 import { MinusIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { TableStatusRow } from "@/components/table-status-row"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { StationInventoryItem } from "@/features/station-inventory/station-inventory-api"
 import {
   useCreateStationInventoryItem,
@@ -25,61 +23,51 @@ export function StationInventorySection({ stationId, canEdit }: StationInventory
   const updateMutation = useUpdateStationInventoryQuantity(stationId)
   const createMutation = useCreateStationInventoryItem(stationId)
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="border-border bg-card rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="font-mono text-[0.6875rem] tracking-wider uppercase">
-                Spare part
-              </TableHead>
-              <TableHead className="font-mono text-[0.6875rem] tracking-wider uppercase">
-                Price
-              </TableHead>
-              <TableHead className="font-mono text-[0.6875rem] tracking-wider uppercase">
-                Quantity
-              </TableHead>
-              <TableHead className="font-mono text-[0.6875rem] tracking-wider uppercase">
-                Updated
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableStatusRow
-              colSpan={4}
-              isLoading={isLoading}
-              isError={isError}
-              isEmpty={!isLoading && !isError && (!data || data.length === 0)}
-              resourceLabel="this station's inventory"
-              emptyMessage="No spare parts stocked at this station yet."
-              onRetry={refetch}
-            />
-            {!isLoading &&
-              !isError &&
-              data?.map((item) => (
-                <InventoryRow
-                  key={item.id}
-                  item={item}
-                  canEdit={canEdit}
-                  onSave={(quantity) =>
-                    updateMutation.mutateAsync(
-                      { id: item.id, quantity },
-                      {
-                        onSuccess: () => toast.success("Inventory updated"),
-                        onError: () => toast.error("Failed to update inventory"),
-                      }
-                    )
-                  }
-                  isPending={updateMutation.isPending}
-                />
-              ))}
-          </TableBody>
-        </Table>
+  if (isLoading) {
+    return <p className="text-muted-foreground text-sm">Loading…</p>
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-8 text-center">
+        <p className="text-destructive text-sm">
+          Couldn't load this station's inventory. Check your connection and try again.
+        </p>
+        <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+          Retry
+        </Button>
       </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      {data?.map((item) => (
+        <PartTile
+          key={item.id}
+          item={item}
+          canEdit={canEdit}
+          onSave={(quantity) =>
+            updateMutation.mutateAsync(
+              { id: item.id, quantity },
+              {
+                onSuccess: () => toast.success("Inventory updated"),
+                onError: () => toast.error("Failed to update inventory"),
+              }
+            )
+          }
+          isPending={updateMutation.isPending}
+        />
+      ))}
+
+      {(!data || data.length === 0) && !canEdit && (
+        <p className="text-muted-foreground col-span-full text-sm">
+          No spare parts stocked at this station yet.
+        </p>
+      )}
 
       {canEdit && (
-        <NewPartForm
+        <AddPartTile
           onCreate={(input) =>
             createMutation.mutateAsync(input, {
               onSuccess: () => toast.success("Spare part added to inventory"),
@@ -93,14 +81,14 @@ export function StationInventorySection({ stationId, canEdit }: StationInventory
   )
 }
 
-interface InventoryRowProps {
+interface PartTileProps {
   item: StationInventoryItem
   canEdit: boolean
   onSave: (quantity: number) => Promise<unknown>
   isPending: boolean
 }
 
-function InventoryRow({ item, canEdit, onSave, isPending }: InventoryRowProps) {
+function PartTile({ item, canEdit, onSave, isPending }: PartTileProps) {
   const [quantity, setQuantity] = useState(item.quantity)
   const dirty = quantity !== item.quantity
 
@@ -109,14 +97,17 @@ function InventoryRow({ item, canEdit, onSave, isPending }: InventoryRowProps) {
   }
 
   return (
-    <TableRow>
-      <TableCell>{item.name}</TableCell>
-      <TableCell className="text-muted-foreground font-mono text-xs">
-        {formatCurrency(item.price)}
-      </TableCell>
-      <TableCell>
+    <Card>
+      <CardContent className="flex flex-col gap-3">
+        <div>
+          <p className="truncate text-sm font-medium">{item.name}</p>
+          <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+            {formatCurrency(item.price)}
+          </p>
+        </div>
+
         {canEdit ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-center gap-1.5">
             <Button
               type="button"
               variant="outline"
@@ -131,7 +122,7 @@ function InventoryRow({ item, canEdit, onSave, isPending }: InventoryRowProps) {
               min={0}
               value={quantity}
               onChange={(event) => setQuantity(Math.max(0, Number(event.target.value)))}
-              className="w-16 text-center font-mono"
+              className="w-14 text-center font-mono"
             />
             <Button
               type="button"
@@ -142,29 +133,32 @@ function InventoryRow({ item, canEdit, onSave, isPending }: InventoryRowProps) {
             >
               <PlusIcon />
             </Button>
-            {dirty && (
-              <Button type="button" size="sm" onClick={handleSave} disabled={isPending}>
-                {isPending ? "Saving…" : "Save"}
-              </Button>
-            )}
           </div>
         ) : (
-          <span className="font-mono text-xs">{item.quantity}</span>
+          <p className="text-center font-mono text-lg font-semibold">{item.quantity}</p>
         )}
-      </TableCell>
-      <TableCell className="text-muted-foreground font-mono text-xs">
-        {new Date(item.updatedAt).toLocaleDateString()}
-      </TableCell>
-    </TableRow>
+
+        {dirty && (
+          <Button type="button" size="sm" onClick={handleSave} disabled={isPending}>
+            {isPending ? "Saving…" : "Save"}
+          </Button>
+        )}
+
+        <p className="text-muted-foreground text-center font-mono text-[0.6875rem] tracking-wide uppercase">
+          Updated {new Date(item.updatedAt).toLocaleDateString()}
+        </p>
+      </CardContent>
+    </Card>
   )
 }
 
-interface NewPartFormProps {
+interface AddPartTileProps {
   onCreate: (input: { name: string; price: number; quantity: number }) => Promise<unknown>
   isPending: boolean
 }
 
-function NewPartForm({ onCreate, isPending }: NewPartFormProps) {
+function AddPartTile({ onCreate, isPending }: AddPartTileProps) {
+  const [expanded, setExpanded] = useState(false)
   const [name, setName] = useState("")
   const [price, setPrice] = useState(0)
   const [quantity, setQuantity] = useState(1)
@@ -175,49 +169,72 @@ function NewPartForm({ onCreate, isPending }: NewPartFormProps) {
       setName("")
       setPrice(0)
       setQuantity(1)
+      setExpanded(false)
     })
   }
 
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="border-border text-muted-foreground hover:border-primary hover:text-primary flex min-h-38 flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed transition-colors"
+      >
+        <PlusIcon className="size-5" />
+        <span className="text-xs font-medium">Add spare part</span>
+      </button>
+    )
+  }
+
   return (
-    <div className="border-border rounded-md border p-4">
-      <p className="mb-3 text-sm font-medium">Add a spare part to this station</p>
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="new-part-name">Name</Label>
+    <Card>
+      <CardContent className="flex flex-col gap-2">
+        <Input
+          placeholder="Part name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          autoFocus
+        />
+        <div className="flex gap-2">
           <Input
-            id="new-part-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="w-48"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="new-part-price">Price</Label>
-          <Input
-            id="new-part-price"
             type="number"
             min={0}
             step="0.01"
+            placeholder="Price"
             value={price}
             onChange={(event) => setPrice(Math.max(0, Number(event.target.value)))}
-            className="w-28"
+            className="w-1/2 font-mono"
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="new-part-quantity">Quantity</Label>
           <Input
-            id="new-part-quantity"
             type="number"
             min={0}
+            placeholder="Qty"
             value={quantity}
             onChange={(event) => setQuantity(Math.max(0, Number(event.target.value)))}
-            className="w-24"
+            className="w-1/2 font-mono"
           />
         </div>
-        <Button disabled={!name.trim() || isPending} onClick={handleAdd}>
-          {isPending ? "Adding…" : "Add part"}
-        </Button>
-      </div>
-    </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => setExpanded(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="flex-1"
+            disabled={!name.trim() || isPending}
+            onClick={handleAdd}
+          >
+            {isPending ? "Adding…" : "Add"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
